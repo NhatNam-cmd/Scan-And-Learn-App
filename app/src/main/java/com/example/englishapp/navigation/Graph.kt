@@ -1,4 +1,4 @@
-package com.project.englishapp.navigation
+package com.example.englishapp.navigation
 
 object Graph {
     const val ROOT = "root_graph"

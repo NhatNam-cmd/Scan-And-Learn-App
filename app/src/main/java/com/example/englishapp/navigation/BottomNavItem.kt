@@ -1,4 +1,4 @@
-package com.project.englishapp.navigation
+package com.example.englishapp.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -31,7 +31,6 @@ sealed class BottomNavItem(
         icon = Icons.Default.MenuBook
     )
 
-    // Thêm Tab Story vào Bottom Navigation
     data object StoryHome : BottomNavItem(
         route = Routes.STORY_HOME,
         title = "Story",

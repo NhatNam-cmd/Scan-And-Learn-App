@@ -1,4 +1,4 @@
-package com.project.englishapp.navigation
+package com.example.englishapp.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +17,7 @@ fun AppNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Routes.DASHBOARD, // Tạm thời để Dashboard làm trang chủ để bạn test UI
+        startDestination = Routes.DASHBOARD,
         modifier = modifier
     ) {
 
@@ -73,12 +73,10 @@ fun AppNavHost(
     }
 }
 
-// ---------------------------------------------------------------------------
-// 🛠 HÀM MẪU (DÙNG TẠM): Hiển thị text ra giữa màn hình để test Navigation
-// ---------------------------------------------------------------------------
 @Composable
 fun PlaceholderScreen(title: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = title)
-    }
+    com.example.englishapp.core.ui.error.ErrorScreen(
+        message = "Bạn đang đứng tại: $title\nHạ tầng Navigation và Theme hoạt động 100%!",
+        onRetry = { /* Test click */ }
+    )
 }

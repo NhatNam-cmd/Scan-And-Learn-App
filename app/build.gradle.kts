@@ -10,7 +10,7 @@ plugins {
 }
 
 android {
-    namespace = "com.project.englishapp"
+    namespace = "com.example.englishapp"
     compileSdk = 34
 
     defaultConfig {
@@ -23,6 +23,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+        //noinspection WrongGradleMethod
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
 
@@ -103,4 +107,5 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.androidx.material.icons.extended)
 }
