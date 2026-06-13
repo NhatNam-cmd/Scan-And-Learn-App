@@ -1,0 +1,67 @@
+# ==========================================
+# 1. ANDROID STUDIO & INTELLIJ IDEA
+# ==========================================
+*.iml
+.idea/
+.idea_modules/
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+*.hprof
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# ==========================================
+# 2. GRADLE & BUID
+# ==========================================
+.gradle/
+build/
+*/build/
+gradle-app.setting
+!gradle/wrapper/gradle-wrapper.jar
+
+# ==========================================
+# 3. BẢO MẬT & API KEYS
+# ==========================================
+# Chứa đường dẫn SDK và các API Key (Gemini, Dictionary)
+local.properties
+
+# File cấu hình bí mật khác (nếu nhóm có dùng thêm)
+secrets.properties
+
+# File cấu hình Firebase
+google-services.json
+
+# ==========================================
+# 4. CHỨNG CHỈ (KEYSTORE) - ĐỂ BUILD APK/AAB
+# ==========================================
+*.jks
+*.keystore
+
+# ==========================================
+# 5. FILE THỰC THI (APP BUNDLES, APKS)
+# ==========================================
+*.apk
+*.apks
+*.aab
+*.aar
+*.dex
+*.class
+
+# ==========================================
+# 6. HỆ ĐIỀU HÀNH (MAC / WINDOWS)
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# 7. LOGS & KHÁC
+# ==========================================
+*.log
