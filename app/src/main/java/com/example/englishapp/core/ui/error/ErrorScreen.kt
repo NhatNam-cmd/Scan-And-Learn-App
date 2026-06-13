@@ -30,7 +30,7 @@ fun ErrorScreen(
             imageVector = Icons.Default.ErrorOutline,
             contentDescription = "Error Icon",
             modifier = Modifier.size(64.dp),
-            color = MaterialTheme.colorScheme.error
+            tint = MaterialTheme.colorScheme.error
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(

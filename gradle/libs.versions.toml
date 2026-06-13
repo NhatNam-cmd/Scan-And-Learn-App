@@ -21,7 +21,7 @@ room = "2.6.1"
 
 retrofit = "2.9.0"
 okhttp = "4.12.0"
-serialization = "1.7.3"
+serialization = "1.6.3"
 
 datastore = "1.1.1"
 
