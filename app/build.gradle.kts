@@ -1,12 +1,11 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-
-    // Áp dụng các Plugin mới
     alias(libs.plugins.hiltAndroid)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlinSerialization)
     id("kotlin-parcelize")
+    id("androidx.room") version "2.6.1"
 }
 
 android {
@@ -14,8 +13,8 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.project.englishapp"
-        minSdk = 26 // Tech Stack Matrix quy định Min SDK 26
+        applicationId = "com.example.englishapp"
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -24,15 +23,15 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        //noinspection WrongGradleMethod
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
+    }
+
+    room {
+        schemaDirectory("$projectDir/schemas")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true // Rủi ro kỹ thuật yêu cầu Minify khi Release
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -51,7 +50,12 @@ android {
         buildConfig = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.8"
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
 }
 
@@ -75,9 +79,9 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     // Room Database
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
 
     // DataStore
     implementation(libs.datastore.preferences)
