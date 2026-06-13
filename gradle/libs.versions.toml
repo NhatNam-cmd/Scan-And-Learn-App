@@ -6,6 +6,7 @@ ktlint = "12.1.1"
 
 agp = "8.5.2"
 kotlin = "1.9.22"
+composeCompiler = "1.5.8"
 ksp = "1.9.22-1.0.17"
 
 coreKtx = "1.13.1"
@@ -20,14 +21,14 @@ room = "2.6.1"
 
 retrofit = "2.9.0"
 okhttp = "4.12.0"
-serialization = "1.7.3"
+serialization = "1.6.3"
 
 datastore = "1.1.1"
 
 workManager = "2.9.1"
 
 cameraX = "1.4.0"
-mlkitText = "16.0.1"
+mlkitText = "16.0.0"
 
 firebaseBom = "33.5.1"
 
@@ -46,7 +47,7 @@ mockk = "1.13.13"
 googleServices = "4.4.2"
 
 [libraries]
-
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 # -------------------------
 
 # Android Core

@@ -1,24 +1,30 @@
-package com.project.englishapp
+package com.example.englishapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import com.example.englishapp.core.ui.theme.ScanLearnTheme
+import com.example.englishapp.navigation.MainContainer
 import dagger.hilt.android.AndroidEntryPoint
-import com.project.englishapp.navigation.AppNavHost
-import com.project.englishapp.core.ui.theme.ScanLearnTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         enableEdgeToEdge()
-
         setContent {
             ScanLearnTheme {
-                // AppNavHost()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MainContainer()
+                }
             }
         }
     }

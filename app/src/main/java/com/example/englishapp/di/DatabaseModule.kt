@@ -1,9 +1,13 @@
-package com.project.englishapp.di
+package com.example.englishapp.di
 
 import android.content.Context
 import androidx.room.Room
-import com.project.englishapp.core.database.AppDatabase
-import com.project.englishapp.core.database.dao.VocabularyDao
+import com.example.englishapp.core.database.AppDatabase
+import com.example.englishapp.core.database.dao.QuizDao
+import com.example.englishapp.core.database.dao.ReviewHistoryDao
+import com.example.englishapp.core.database.dao.StoryDao
+import com.example.englishapp.core.database.dao.TopicDao
+import com.example.englishapp.core.database.dao.VocabularyDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,5 +32,21 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideTopicDao(database: AppDatabase): TopicDao = database.topicDao()
+
+    @Provides
+    @Singleton
     fun provideVocabularyDao(database: AppDatabase): VocabularyDao = database.vocabularyDao()
+
+    @Provides
+    @Singleton
+    fun provideReviewHistoryDao(database: AppDatabase): ReviewHistoryDao = database.reviewHistoryDao()
+
+    @Provides
+    @Singleton
+    fun provideStoryDao(database: AppDatabase): StoryDao = database.storyDao()
+
+    @Provides
+    @Singleton
+    fun provideQuizDao(database: AppDatabase): QuizDao = database.quizDao()
 }

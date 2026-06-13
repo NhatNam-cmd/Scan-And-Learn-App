@@ -1,4 +1,4 @@
-package com.project.englishapp.navigation
+package com.example.englishapp.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
