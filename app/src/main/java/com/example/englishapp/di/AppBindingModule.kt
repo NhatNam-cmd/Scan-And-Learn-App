@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.englishapp.core.common.DefaultDispatcherProvider
+import com.example.englishapp.core.common.DispatcherProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,16 +28,15 @@ annotation class DefaultDispatcher
 @Retention(AnnotationRetention.BINARY)
 annotation class MainDispatcher
 
-// Extension property tạo instance cho DataStore (Chỉ tạo 1 lần duy nhất)
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "scan_learn_settings")
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppBindingModule {
 
-    @IoDispatcher
     @Provides
-    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+    @Singleton
+    fun provideDispatcherProvider(): DispatcherProvider = DefaultDispatcherProvider()
 
     @DefaultDispatcher
     @Provides
