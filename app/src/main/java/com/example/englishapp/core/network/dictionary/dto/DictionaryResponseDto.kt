@@ -1,4 +1,4 @@
-package com.project.englishapp.core.network.dictionary
+package com.example.englishapp.core.network.dictionary
 
 import kotlinx.serialization.Serializable
 

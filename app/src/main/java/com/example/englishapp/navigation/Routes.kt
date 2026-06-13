@@ -1,18 +1,18 @@
-package com.project.englishapp.navigation
+package com.example.englishapp.navigation
 
 object Routes {
     // Auth & Splash
     const val SPLASH = "splash"
     const val LOGIN = "login"
 
-    // Bottom Navigation (Main Tabs)
+    // Bottom Navigation
     const val DASHBOARD = "dashboard"
     const val SCAN = "scan"
     const val VOCABULARY = "vocabulary"
     const val STORY_HOME = "story_home"
     const val PROFILE = "profile"
 
-    // Feature Screens (Các màn hình con)
+    // Feature Screens
     const val STORY_SESSION = "story_session"
     const val STORY_RESULT = "story_result"
 
