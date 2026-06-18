@@ -30,4 +30,13 @@ public interface VocabularyDao {
 
     @Query("SELECT * FROM vocabulary WHERE nextReviewDate <= :currentDate AND isMastered = 0 ORDER BY nextReviewDate ASC LIMIT :limit")
     List<VocabularyEntity> getDueWords(long currentDate, int limit);
+
+    @Query("SELECT * FROM vocabulary WHERE isMastered = 0 ORDER BY masteryLevel ASC, createdAt DESC")
+    LiveData<List<VocabularyEntity>> getUnmasteredWords();
+
+    @Query("SELECT * FROM vocabulary WHERE vocabularyId IN (:ids)")
+    List<VocabularyEntity> getVocabularyByIds(List<Long> ids);
+
+    @Query("SELECT COUNT(*) FROM vocabulary WHERE isMastered = 0")
+    int countUnmasteredWords();
 }

@@ -39,6 +39,7 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 
 googleServices = "4.4.2"
+appcompatVersion = "1.7.1"
 
 [libraries]
 
@@ -209,6 +210,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompatVersion" }
 
 [plugins]
 
