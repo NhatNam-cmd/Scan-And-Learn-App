@@ -43,9 +43,19 @@ public class WordSelectionAdapter extends RecyclerView.Adapter<WordSelectionAdap
         VocabularyEntity word = words.get(position);
         holder.tvWord.setText(word.getWord());
         holder.tvMeaning.setText(word.getMeaning());
-        holder.checkBox.setChecked(selectedIds.contains(word.getVocabularyId()));
+        boolean selected = selectedIds.contains(word.getVocabularyId());
+        holder.itemView.setSelected(selected);
+        holder.checkBox.setChecked(selected);
         holder.itemView.setOnClickListener(v -> listener.onWordClicked(word));
         holder.checkBox.setOnClickListener(v -> listener.onWordClicked(word));
+        holder.itemView.setAlpha(0f);
+        holder.itemView.setTranslationY(16f);
+        holder.itemView.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setStartDelay(Math.min(position * 25L, 220L))
+                .setDuration(180L)
+                .start();
     }
 
     @Override

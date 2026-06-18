@@ -35,6 +35,7 @@ public class StorySessionFragment extends Fragment {
     private GridLayout answerGrid;
     private GridLayout wordGrid;
     private Button btnSubmit;
+    private final List<String> shuffledWords = new ArrayList<>();
 
     @Nullable
     @Override
@@ -59,7 +60,13 @@ public class StorySessionFragment extends Fragment {
                 return;
             }
             tvTitle.setText(story.getTitle());
+            shuffledWords.clear();
+            for (StoryBlank blank : story.getBlanks()) {
+                shuffledWords.add(blank.getWord());
+            }
+            Collections.shuffle(shuffledWords);
             render(story, viewModel.getAnswers().getValue());
+            animateEnter(view);
         });
         viewModel.getAnswers().observe(getViewLifecycleOwner(),
                 answers -> render(viewModel.getCurrentStory().getValue(), answers));
@@ -76,7 +83,9 @@ public class StorySessionFragment extends Fragment {
         tvStory.setText(buildStoryText(story, answers));
         renderAnswerButtons(answers);
         renderWordButtons(story, answers);
-        btnSubmit.setEnabled(!answers.contains(""));
+        boolean canSubmit = !answers.contains("");
+        btnSubmit.setEnabled(canSubmit);
+        btnSubmit.setAlpha(canSubmit ? 1f : 0.45f);
     }
 
     private String buildStoryText(StoryGameData story, List<String> answers) {
@@ -98,6 +107,7 @@ public class StorySessionFragment extends Fragment {
             button.setEnabled(!answer.isEmpty());
             button.setOnClickListener(v -> viewModel.clearBlank(index));
             answerGrid.addView(button);
+            animateChip(button);
         }
     }
 
@@ -105,18 +115,14 @@ public class StorySessionFragment extends Fragment {
         wordGrid.removeAllViews();
         wordGrid.setColumnCount(2);
         Set<String> used = new HashSet<>(answers);
-        List<String> words = new ArrayList<>();
-        for (StoryBlank blank : story.getBlanks()) {
-            words.add(blank.getWord());
-        }
-        Collections.shuffle(words);
-        for (String word : words) {
+        for (String word : shuffledWords) {
             if (used.contains(word)) {
                 continue;
             }
             MaterialButton button = makeChip(word);
             button.setOnClickListener(v -> viewModel.fillNextBlank(word));
             wordGrid.addView(button);
+            animateChip(button);
         }
     }
 
@@ -131,5 +137,18 @@ public class StorySessionFragment extends Fragment {
         params.setMargins(8, 8, 8, 8);
         button.setLayoutParams(params);
         return button;
+    }
+
+    private void animateEnter(View view) {
+        view.setAlpha(0f);
+        view.setTranslationY(20f);
+        view.animate().alpha(1f).translationY(0f).setDuration(260L).start();
+    }
+
+    private void animateChip(View view) {
+        view.setScaleX(0.94f);
+        view.setScaleY(0.94f);
+        view.setAlpha(0f);
+        view.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(140L).start();
     }
 }

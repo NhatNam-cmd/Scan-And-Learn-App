@@ -71,6 +71,9 @@ public class VocabularySeeder {
     }
 
     private static void insert(AppDatabase database, long topicId, String word, String meaning, String example) {
+        if (database.vocabularyDao().countWord(word) > 0) {
+            return;
+        }
         long now = System.currentTimeMillis();
         VocabularyEntity entity = new VocabularyEntity(
                 0,

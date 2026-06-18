@@ -43,12 +43,54 @@
             android:textColor="@color/light_on_background"
             android:textSize="16sp" />
 
+        <LinearLayout
+            android:id="@+id/layout_story_badges"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_story_badge"
+                android:gravity="center"
+                android:text="5-10 từ"
+                android:textColor="@color/light_on_secondary_container"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_story_badge"
+                android:gravity="center"
+                android:text="Có Offline"
+                android:textColor="@color/light_on_secondary_container"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_story_badge"
+                android:gravity="center"
+                android:text="+EXP"
+                android:textColor="@color/light_on_secondary_container"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/btn_create_story"
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:layout_marginTop="32dp"
-            android:backgroundTint="@color/light_primary"
+            android:background="@drawable/bg_story_button_primary"
             android:stateListAnimator="@null"
             android:text="Tạo cốt truyện mới"
             android:textAllCaps="false"

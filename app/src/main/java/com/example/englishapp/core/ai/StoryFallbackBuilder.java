@@ -6,8 +6,6 @@ import com.example.englishapp.feature.story.domain.StoryGameData;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-
 public class StoryFallbackBuilder {
     public StoryGameData buildOfflineStory(List<VocabularyEntity> words) {
         StringBuilder story = new StringBuilder();

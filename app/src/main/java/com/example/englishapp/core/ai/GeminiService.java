@@ -7,7 +7,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -76,8 +78,17 @@ public class GeminiService {
     }
 
     private void attachVocabularyIds(StoryGameData data, List<VocabularyEntity> words) {
-        for (int i = 0; i < data.getBlanks().size() && i < words.size(); i++) {
-            data.getBlanks().get(i).setVocabularyId(words.get(i).getVocabularyId());
+        Map<String, Long> idsByWord = new HashMap<>();
+        for (VocabularyEntity word : words) {
+            idsByWord.put(word.getWord().toLowerCase(), word.getVocabularyId());
+        }
+        for (int i = 0; i < data.getBlanks().size(); i++) {
+            String blankWord = data.getBlanks().get(i).getWord();
+            if (blankWord != null && idsByWord.containsKey(blankWord.toLowerCase())) {
+                data.getBlanks().get(i).setVocabularyId(idsByWord.get(blankWord.toLowerCase()));
+            } else if (i < words.size()) {
+                data.getBlanks().get(i).setVocabularyId(words.get(i).getVocabularyId());
+            }
         }
     }
 

@@ -41,6 +41,7 @@ public class StoryWordSelectionFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        animateEnter(view);
         viewModel = new ViewModelProvider(requireActivity()).get(StoryViewModel.class);
         btnStart = view.findViewById(R.id.btn_start_story);
         tvCounter = view.findViewById(R.id.tv_selection_counter);
@@ -95,5 +96,11 @@ public class StoryWordSelectionFragment extends Fragment {
         } else {
             btnStart.setText("Bắt đầu tạo truyện");
         }
+    }
+
+    private void animateEnter(View view) {
+        view.setAlpha(0f);
+        view.setTranslationY(18f);
+        view.animate().alpha(1f).translationY(0f).setDuration(240L).start();
     }
 }

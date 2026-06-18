@@ -18,7 +18,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="12dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:background="@drawable/bg_story_surface"
+        android:padding="16dp">
 
         <TextView
             android:id="@+id/tv_story_content"
@@ -64,7 +66,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="8dp"
-        android:backgroundTint="@color/light_primary"
+        android:background="@drawable/bg_story_button_primary"
         android:enabled="false"
         android:text="Hoàn thành"
         android:textAllCaps="false"

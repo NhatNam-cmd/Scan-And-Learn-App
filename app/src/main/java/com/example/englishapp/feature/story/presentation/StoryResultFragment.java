@@ -29,6 +29,7 @@ public class StoryResultFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        animateEnter(view);
         StoryViewModel viewModel = new ViewModelProvider(requireActivity()).get(StoryViewModel.class);
         TextView tvScore = view.findViewById(R.id.tv_result_score);
         TextView tvExp = view.findViewById(R.id.tv_result_exp);
@@ -45,5 +46,12 @@ public class StoryResultFragment extends Fragment {
             viewModel.prepareNewStory();
             NavHostFragment.findNavController(this).navigate(R.id.nav_story_word_selection);
         });
+    }
+
+    private void animateEnter(View view) {
+        view.setAlpha(0f);
+        view.setScaleX(0.98f);
+        view.setScaleY(0.98f);
+        view.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(260L).start();
     }
 }

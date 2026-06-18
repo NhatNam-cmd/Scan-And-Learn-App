@@ -28,9 +28,20 @@ public class StoryHomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         StoryViewModel viewModel = new ViewModelProvider(requireActivity()).get(StoryViewModel.class);
+        animateEnter(view.findViewById(R.id.img_story), 0);
+        animateEnter(view.findViewById(R.id.tv_story_intro_title), 70);
+        animateEnter(view.findViewById(R.id.tv_story_intro), 120);
+        animateEnter(view.findViewById(R.id.layout_story_badges), 170);
+        animateEnter(view.findViewById(R.id.btn_create_story), 220);
         view.findViewById(R.id.btn_create_story).setOnClickListener(v -> {
             viewModel.prepareNewStory();
             NavHostFragment.findNavController(this).navigate(R.id.nav_story_word_selection);
         });
+    }
+
+    private void animateEnter(View view, long delay) {
+        view.setAlpha(0f);
+        view.setTranslationY(18f);
+        view.animate().alpha(1f).translationY(0f).setStartDelay(delay).setDuration(240L).start();
     }
 }
