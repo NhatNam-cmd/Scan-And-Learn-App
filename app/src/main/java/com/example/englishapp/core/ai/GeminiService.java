@@ -18,8 +18,8 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
+import retrofit2.http.Header;
 import retrofit2.http.POST;
-import retrofit2.http.Query;
 
 public class GeminiService {
     private static final String BASE_URL = "https://generativelanguage.googleapis.com/";
@@ -62,6 +62,11 @@ public class GeminiService {
 
         JsonObject body = new JsonObject();
         body.add("contents", contents);
+        JsonObject generationConfig = new JsonObject();
+        generationConfig.addProperty("responseMimeType", "application/json");
+        generationConfig.addProperty("temperature", 0.7);
+        generationConfig.addProperty("maxOutputTokens", 1200);
+        body.add("generationConfig", generationConfig);
 
         Response<JsonObject> response = apiService.generateContent(BuildConfig.GEMINI_API_KEY, body).execute();
         if (!response.isSuccessful() || response.body() == null) {
@@ -115,8 +120,8 @@ public class GeminiService {
     }
 
     public interface GeminiApiService {
-        @POST("v1beta/models/gemini-1.5-flash:generateContent")
-        Call<JsonObject> generateContent(@Query("key") String apiKey, @Body JsonObject body);
+        @POST("v1beta/models/gemini-2.5-flash:generateContent")
+        Call<JsonObject> generateContent(@Header("x-goog-api-key") String apiKey, @Body JsonObject body);
     }
 }
 

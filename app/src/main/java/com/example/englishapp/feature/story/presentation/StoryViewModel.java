@@ -85,10 +85,10 @@ public class StoryViewModel extends ViewModel {
                 emptyAnswers.add("");
             }
             executorProvider.postToMainThread(() -> {
-                currentStory.setValue(story);
                 answers.setValue(emptyAnswers);
                 offlineMode.setValue(story != null && story.isOffline());
                 loading.setValue(false);
+                currentStory.setValue(story);
             });
         });
     }
