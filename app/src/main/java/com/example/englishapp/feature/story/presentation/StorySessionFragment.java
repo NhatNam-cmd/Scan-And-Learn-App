@@ -1,6 +1,12 @@
 package com.example.englishapp.feature.story.presentation;
 
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
+import android.text.style.UnderlineSpan;
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +16,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
@@ -88,13 +95,35 @@ public class StorySessionFragment extends Fragment {
         btnSubmit.setAlpha(canSubmit ? 1f : 0.45f);
     }
 
-    private String buildStoryText(StoryGameData story, List<String> answers) {
+    private SpannableStringBuilder buildStoryText(StoryGameData story, List<String> answers) {
+        SpannableStringBuilder builder = new SpannableStringBuilder();
         String text = story.getStory();
+        int searchStart = 0;
         for (int i = 0; i < answers.size(); i++) {
-            String value = answers.get(i).isEmpty() ? "____" : answers.get(i);
-            text = text.replace("[BLANK_" + (i + 1) + "]", value);
+            String token = "[BLANK_" + (i + 1) + "]";
+            int tokenIndex = text.indexOf(token, searchStart);
+            if (tokenIndex < 0) {
+                continue;
+            }
+            builder.append(text, searchStart, tokenIndex);
+            String answer = answers.get(i);
+            boolean isFilled = answer != null && !answer.isEmpty();
+            String value = isFilled ? answer : "________";
+            int start = builder.length();
+            builder.append(value);
+            int end = builder.length();
+            builder.setSpan(new UnderlineSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            if (isFilled) {
+                builder.setSpan(new ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.light_primary)),
+                        start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                builder.setSpan(new StyleSpan(Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            searchStart = tokenIndex + token.length();
         }
-        return text;
+        if (searchStart < text.length()) {
+            builder.append(text.substring(searchStart));
+        }
+        return builder;
     }
 
     private void renderAnswerButtons(List<String> answers) {

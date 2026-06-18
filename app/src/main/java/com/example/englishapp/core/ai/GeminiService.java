@@ -19,10 +19,16 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.Body;
 import retrofit2.http.Header;
+import retrofit2.http.Path;
 import retrofit2.http.POST;
 
 public class GeminiService {
     private static final String BASE_URL = "https://generativelanguage.googleapis.com/";
+    private static final String[] STORY_MODELS = {
+            "gemini-2.5-flash",
+            "gemini-flash-latest",
+            "gemini-2.5-flash-lite"
+    };
 
     private final GeminiApiService apiService;
     private final StoryPromptBuilder promptBuilder;
@@ -68,7 +74,27 @@ public class GeminiService {
         generationConfig.addProperty("maxOutputTokens", 1200);
         body.add("generationConfig", generationConfig);
 
-        Response<JsonObject> response = apiService.generateContent(BuildConfig.GEMINI_API_KEY, body).execute();
+        IOException lastError = null;
+        for (String model : STORY_MODELS) {
+            for (int attempt = 0; attempt < 2; attempt++) {
+                try {
+                    StoryGameData data = requestStory(model, body, words);
+                    data.setOffline(false);
+                    return data;
+                } catch (IOException exception) {
+                    lastError = exception;
+                    if (!isTemporaryGeminiError(exception)) {
+                        break;
+                    }
+                    sleepBeforeRetry(attempt);
+                }
+            }
+        }
+        throw lastError == null ? new IOException("Gemini generation failed") : lastError;
+    }
+
+    private StoryGameData requestStory(String model, JsonObject body, List<VocabularyEntity> words) throws IOException {
+        Response<JsonObject> response = apiService.generateContent(model, BuildConfig.GEMINI_API_KEY, body).execute();
         if (!response.isSuccessful() || response.body() == null) {
             throw new IOException("Gemini returned HTTP " + response.code());
         }
@@ -77,9 +103,23 @@ public class GeminiService {
         if (data == null) {
             throw new IOException("Invalid story JSON");
         }
-        data.setOffline(false);
         attachVocabularyIds(data, words);
         return data;
+    }
+
+    private boolean isTemporaryGeminiError(IOException exception) {
+        String message = exception.getMessage();
+        return message != null && (message.contains("HTTP 429") || message.contains("HTTP 500")
+                || message.contains("HTTP 502") || message.contains("HTTP 503")
+                || message.contains("HTTP 504"));
+    }
+
+    private void sleepBeforeRetry(int attempt) {
+        try {
+            Thread.sleep(attempt == 0 ? 800L : 1500L);
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void attachVocabularyIds(StoryGameData data, List<VocabularyEntity> words) {
@@ -120,8 +160,10 @@ public class GeminiService {
     }
 
     public interface GeminiApiService {
-        @POST("v1beta/models/gemini-2.5-flash:generateContent")
-        Call<JsonObject> generateContent(@Header("x-goog-api-key") String apiKey, @Body JsonObject body);
+        @POST("v1beta/models/{model}:generateContent")
+        Call<JsonObject> generateContent(@Path("model") String model,
+                @Header("x-goog-api-key") String apiKey,
+                @Body JsonObject body);
     }
 }
 
