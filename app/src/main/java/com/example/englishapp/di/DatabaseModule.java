@@ -32,3 +32,4 @@ public class DatabaseModule {
     @Provides @Singleton public static StoryDao provideStoryDao(AppDatabase db) { return db.storyDao(); }
     @Provides @Singleton public static QuizDao provideQuizDao(AppDatabase db) { return db.quizDao(); }
 }
+

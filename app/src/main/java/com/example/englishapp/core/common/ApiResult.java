@@ -16,16 +16,34 @@ public abstract class ApiResult<T> {
     private ApiResult() {}
 
     /**
+     * Helper methods to create ApiResult instances
+     */
+    @NonNull
+    public static <T> ApiResult<T> success(@Nullable T data) {
+        return new Success<>(data);
+    }
+
+    @NonNull
+    public static <T> ApiResult<T> error(@NonNull String message) {
+        return new Error<>(message);
+    }
+
+    @NonNull
+    public static <T> ApiResult<T> error(@NonNull String message, @Nullable Throwable exception) {
+        return new Error<>(message, exception);
+    }
+
+    /**
      * Represents a successful API result containing data.
      */
     public static final class Success<T> extends ApiResult<T> {
         private final T data;
 
-        public Success(@NonNull T data) {
+        public Success(@Nullable T data) {
             this.data = data;
         }
 
-        @NonNull
+        @Nullable
         public T getData() {
             return data;
         }
@@ -53,7 +71,7 @@ public abstract class ApiResult<T> {
     /**
      * Represents an error result with a message and an optional exception.
      */
-    public static final class Error extends ApiResult<Void> {
+    public static final class Error<T> extends ApiResult<T> {
         private final String message;
         @Nullable
         private final Throwable exception;
@@ -81,7 +99,7 @@ public abstract class ApiResult<T> {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            Error error = (Error) o;
+            Error<?> error = (Error<?>) o;
             return Objects.equals(message, error.message)
                     && Objects.equals(exception, error.exception);
         }
