@@ -10,8 +10,7 @@ import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.GridLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,7 +23,9 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.englishapp.R;
 import com.example.englishapp.feature.story.domain.StoryBlank;
 import com.example.englishapp.feature.story.domain.StoryGameData;
-import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,9 +40,11 @@ public class StorySessionFragment extends Fragment {
     private StoryViewModel viewModel;
     private TextView tvTitle;
     private TextView tvStory;
-    private GridLayout answerGrid;
-    private GridLayout wordGrid;
+    private ChipGroup chipGroupAnswers;
+    private ChipGroup chipGroupWords;
     private Button btnSubmit;
+    private ProgressBar pbFillProgress;
+    private TextView tvFillCounter;
     private final List<String> shuffledWords = new ArrayList<>();
 
     @Nullable
@@ -57,9 +60,11 @@ public class StorySessionFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(StoryViewModel.class);
         tvTitle = view.findViewById(R.id.tv_story_title);
         tvStory = view.findViewById(R.id.tv_story_content);
-        answerGrid = view.findViewById(R.id.grid_answers);
-        wordGrid = view.findViewById(R.id.grid_words);
+        chipGroupAnswers = view.findViewById(R.id.chip_group_answers);
+        chipGroupWords = view.findViewById(R.id.chip_group_words);
         btnSubmit = view.findViewById(R.id.btn_submit_story);
+        pbFillProgress = view.findViewById(R.id.pb_fill_progress);
+        tvFillCounter = view.findViewById(R.id.tv_fill_counter);
 
         viewModel.getCurrentStory().observe(getViewLifecycleOwner(), story -> {
             if (story == null) {
@@ -88,8 +93,18 @@ public class StorySessionFragment extends Fragment {
             return;
         }
         tvStory.setText(buildStoryText(story, answers));
-        renderAnswerButtons(answers);
-        renderWordButtons(story, answers);
+        renderAnswerChips(answers);
+        renderWordChips(answers);
+
+        int filled = 0;
+        for (String a : answers) {
+            if (a != null && !a.isEmpty()) filled++;
+        }
+        int total = answers.size();
+        int progress = total > 0 ? (filled * 100 / total) : 0;
+        pbFillProgress.setProgress(progress);
+        tvFillCounter.setText(filled + "/" + total + " ô");
+
         boolean canSubmit = !answers.contains("");
         btnSubmit.setEnabled(canSubmit);
         btnSubmit.setAlpha(canSubmit ? 1f : 0.45f);
@@ -126,46 +141,81 @@ public class StorySessionFragment extends Fragment {
         return builder;
     }
 
-    private void renderAnswerButtons(List<String> answers) {
-        answerGrid.removeAllViews();
-        answerGrid.setColumnCount(2);
+    private void renderAnswerChips(List<String> answers) {
+        chipGroupAnswers.removeAllViews();
         for (int i = 0; i < answers.size(); i++) {
             String answer = answers.get(i);
-            MaterialButton button = makeChip(answer.isEmpty() ? "Ô " + (i + 1) : answer);
+            boolean isFilled = answer != null && !answer.isEmpty();
+            Chip chip = makeAnswerChip(isFilled ? answer : "Ô " + (i + 1), isFilled);
             final int index = i;
-            button.setEnabled(!answer.isEmpty());
-            button.setOnClickListener(v -> viewModel.clearBlank(index));
-            answerGrid.addView(button);
-            animateChip(button);
+            if (isFilled) {
+                chip.setOnClickListener(v -> {
+                    animateChipRemove(chip);
+                    viewModel.clearBlank(index);
+                });
+            }
+            chipGroupAnswers.addView(chip);
+            animateChip(chip);
         }
     }
 
-    private void renderWordButtons(StoryGameData story, List<String> answers) {
-        wordGrid.removeAllViews();
-        wordGrid.setColumnCount(2);
+    private void renderWordChips(List<String> answers) {
+        chipGroupWords.removeAllViews();
         Set<String> used = new HashSet<>(answers);
         for (String word : shuffledWords) {
             if (used.contains(word)) {
                 continue;
             }
-            MaterialButton button = makeChip(word);
-            button.setOnClickListener(v -> viewModel.fillNextBlank(word));
-            wordGrid.addView(button);
-            animateChip(button);
+            Chip chip = makeWordChip(word);
+            chip.setOnClickListener(v -> {
+                animateChipSelect(chip);
+                viewModel.fillNextBlank(word);
+            });
+            chipGroupWords.addView(chip);
+            animateChip(chip);
         }
     }
 
-    private MaterialButton makeChip(String text) {
-        MaterialButton button = new MaterialButton(requireContext());
-        button.setText(text);
-        button.setAllCaps(false);
-        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = 0;
-        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        params.setMargins(8, 8, 8, 8);
-        button.setLayoutParams(params);
-        return button;
+    private Chip makeWordChip(String text) {
+        Chip chip = new Chip(requireContext());
+        chip.setText(text);
+        chip.setChipBackgroundColorResource(R.color.light_primary_container);
+        chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.light_primary));
+        chip.setChipStrokeColorResource(R.color.light_primary);
+        chip.setChipStrokeWidth(dpToPx(1.5f));
+        chip.setTextSize(14f);
+        chip.setTypeface(chip.getTypeface(), Typeface.BOLD);
+        chip.setClickable(true);
+        chip.setFocusable(true);
+        chip.setChipCornerRadius(dpToPx(20f));
+        return chip;
+    }
+
+    private Chip makeAnswerChip(String text, boolean isFilled) {
+        Chip chip = new Chip(requireContext());
+        chip.setText(text);
+        if (isFilled) {
+            chip.setChipBackgroundColorResource(R.color.light_secondary_container);
+            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.light_on_secondary_container));
+            chip.setChipStrokeColorResource(R.color.light_secondary);
+            chip.setChipStrokeWidth(dpToPx(1.5f));
+            chip.setCloseIconVisible(true);
+            chip.setCloseIconTint(ContextCompat.getColorStateList(requireContext(), R.color.light_secondary));
+        } else {
+            chip.setChipBackgroundColorResource(android.R.color.transparent);
+            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.light_secondary));
+            chip.setChipStrokeWidth(dpToPx(1.5f));
+            chip.setChipStrokeColor(ContextCompat.getColorStateList(requireContext(), R.color.light_secondary));
+            chip.setEnabled(false);
+            chip.setAlpha(0.5f);
+        }
+        chip.setTextSize(13f);
+        chip.setChipCornerRadius(dpToPx(20f));
+        return chip;
+    }
+
+    private float dpToPx(float dp) {
+        return dp * requireContext().getResources().getDisplayMetrics().density;
     }
 
     private void animateEnter(View view) {
@@ -175,9 +225,19 @@ public class StorySessionFragment extends Fragment {
     }
 
     private void animateChip(View view) {
-        view.setScaleX(0.94f);
-        view.setScaleY(0.94f);
+        view.setScaleX(0.85f);
+        view.setScaleY(0.85f);
         view.setAlpha(0f);
-        view.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(140L).start();
+        view.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(180L).start();
+    }
+
+    private void animateChipSelect(View view) {
+        view.animate().scaleX(0.88f).scaleY(0.88f).setDuration(80L)
+                .withEndAction(() -> view.animate().scaleX(1f).scaleY(1f).setDuration(80L).start())
+                .start();
+    }
+
+    private void animateChipRemove(View view) {
+        view.animate().scaleX(0.7f).scaleY(0.7f).alpha(0f).setDuration(120L).start();
     }
 }

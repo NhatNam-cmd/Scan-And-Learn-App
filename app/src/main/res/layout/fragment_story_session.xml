@@ -3,72 +3,204 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/light_background"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tv_story_title"
+    <!-- Header -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/light_on_background"
-        android:textSize="22sp"
-        android:textStyle="bold" />
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_weight="1"
-        android:background="@drawable/bg_story_surface"
-        android:padding="16dp">
+        android:background="@drawable/bg_story_header"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp">
 
         <TextView
-            android:id="@+id/tv_story_content"
+            android:id="@+id/tv_story_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:lineSpacingExtra="6dp"
-            android:textColor="@color/light_on_background"
-            android:textSize="18sp" />
-    </ScrollView>
+            android:textColor="#FFFFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/tv_answer_title"
+        <!-- Fill progress -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ProgressBar
+                android:id="@+id/pb_fill_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp"
+                android:layout_height="6dp"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="0"
+                android:progressTint="#FFFFFFFF"
+                android:progressBackgroundTint="#44FFFFFF" />
+
+            <TextView
+                android:id="@+id/tv_fill_counter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="0/0 ô"
+                android:textColor="#FFFFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Scrollable content: story + word bank -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="false"
+        android:overScrollMode="never"
+        android:paddingBottom="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Story text panel -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_panel_card"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="📖 Câu chuyện"
+                    android:textColor="@color/light_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_story_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingMultiplier="1.6"
+                    android:textColor="@color/light_on_background"
+                    android:textSize="17sp" />
+            </LinearLayout>
+
+            <!-- Filled answers panel -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_panel_card"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:paddingBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="✅ Ô đã điền"
+                        android:textColor="@color/light_secondary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_answer_hint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Chạm để xóa"
+                        android:textColor="#FF9CA3AF"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chip_group_answers"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp" />
+            </LinearLayout>
+
+            <!-- Word bank panel -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_panel_card"
+                android:orientation="vertical"
+                android:padding="14dp"
+                android:paddingBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🔤 Kho từ"
+                        android:textColor="@color/light_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_bank_hint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Chạm để điền"
+                        android:textColor="#FF9CA3AF"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chip_group_words"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Bottom submit button — always visible -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Ô đã điền"
-        android:textColor="@color/light_secondary"
-        android:textStyle="bold" />
+        android:background="@color/light_surface"
+        android:elevation="8dp"
+        android:padding="16dp"
+        android:paddingBottom="20dp">
 
-    <GridLayout
-        android:id="@+id/grid_answers"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:columnCount="2" />
-
-    <TextView
-        android:id="@+id/tv_word_bank_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Kho từ"
-        android:textColor="@color/light_secondary"
-        android:textStyle="bold" />
-
-    <GridLayout
-        android:id="@+id/grid_words"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:columnCount="2" />
-
-    <Button
-        android:id="@+id/btn_submit_story"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_story_button_primary"
-        android:enabled="false"
-        android:text="Hoàn thành"
-        android:textAllCaps="false"
-        android:textColor="@color/light_on_primary" />
+        <Button
+            android:id="@+id/btn_submit_story"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:background="@drawable/bg_story_button_primary"
+            android:enabled="false"
+            android:alpha="0.45"
+            android:stateListAnimator="@null"
+            android:text="Hoàn thành"
+            android:textAllCaps="false"
+            android:textColor="@color/light_on_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 </LinearLayout>

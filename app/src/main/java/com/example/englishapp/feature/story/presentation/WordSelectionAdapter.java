@@ -1,5 +1,6 @@
 package com.example.englishapp.feature.story.presentation;
 
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,6 +8,7 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishapp.R;
@@ -41,20 +43,43 @@ public class WordSelectionAdapter extends RecyclerView.Adapter<WordSelectionAdap
     @Override
     public void onBindViewHolder(@NonNull WordViewHolder holder, int position) {
         VocabularyEntity word = words.get(position);
+        boolean selected = selectedIds.contains(word.getVocabularyId());
+
         holder.tvWord.setText(word.getWord());
         holder.tvMeaning.setText(word.getMeaning());
-        boolean selected = selectedIds.contains(word.getVocabularyId());
-        holder.itemView.setSelected(selected);
+
+        // Show first letter as avatar
+        String initial = word.getWord() != null && !word.getWord().isEmpty()
+                ? String.valueOf(word.getWord().charAt(0)).toUpperCase()
+                : "?";
+        holder.tvInitial.setText(initial);
+
+        // Update card visual state
         holder.checkBox.setChecked(selected);
-        holder.itemView.setOnClickListener(v -> listener.onWordClicked(word));
+        if (selected) {
+            holder.card.setCardBackgroundColor(
+                    holder.itemView.getContext().getResources().getColor(R.color.light_primary_container, null));
+            holder.card.setCardElevation(6f * holder.itemView.getContext().getResources().getDisplayMetrics().density);
+        } else {
+            holder.card.setCardBackgroundColor(
+                    holder.itemView.getContext().getResources().getColor(R.color.light_surface, null));
+            holder.card.setCardElevation(2f * holder.itemView.getContext().getResources().getDisplayMetrics().density);
+        }
+
+        holder.card.setOnClickListener(v -> {
+            animateCardPress(holder.card);
+            listener.onWordClicked(word);
+        });
         holder.checkBox.setOnClickListener(v -> listener.onWordClicked(word));
+
+        // Staggered entrance animation
         holder.itemView.setAlpha(0f);
-        holder.itemView.setTranslationY(16f);
+        holder.itemView.setTranslationY(20f);
         holder.itemView.animate()
                 .alpha(1f)
                 .translationY(0f)
-                .setStartDelay(Math.min(position * 25L, 220L))
-                .setDuration(180L)
+                .setStartDelay(Math.min(position * 30L, 240L))
+                .setDuration(200L)
                 .start();
     }
 
@@ -79,15 +104,25 @@ public class WordSelectionAdapter extends RecyclerView.Adapter<WordSelectionAdap
         notifyDataSetChanged();
     }
 
+    private void animateCardPress(View view) {
+        view.animate().scaleX(0.96f).scaleY(0.96f).setDuration(80L)
+                .withEndAction(() -> view.animate().scaleX(1f).scaleY(1f).setDuration(120L).start())
+                .start();
+    }
+
     static class WordViewHolder extends RecyclerView.ViewHolder {
+        private final CardView card;
         private final TextView tvWord;
         private final TextView tvMeaning;
+        private final TextView tvInitial;
         private final CheckBox checkBox;
 
         WordViewHolder(@NonNull View itemView) {
             super(itemView);
+            card = itemView.findViewById(R.id.card_word_item);
             tvWord = itemView.findViewById(R.id.tv_word);
             tvMeaning = itemView.findViewById(R.id.tv_meaning);
+            tvInitial = itemView.findViewById(R.id.tv_word_initial);
             checkBox = itemView.findViewById(R.id.cb_selected);
         }
     }
