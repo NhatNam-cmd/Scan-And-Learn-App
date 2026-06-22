@@ -27,4 +27,7 @@ public interface QuizDao {
 
     @Query("SELECT * FROM quiz_session ORDER BY completedAt DESC")
     LiveData<List<QuizSessionEntity>> getAllQuizSessions();
+
+    @Query("SELECT COUNT(*) FROM quiz_session WHERE completedAt > 0")
+    int countCompletedQuizzes();
 }

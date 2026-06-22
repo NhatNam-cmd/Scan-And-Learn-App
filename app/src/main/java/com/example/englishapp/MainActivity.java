@@ -9,6 +9,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
+import com.example.englishapp.core.datastore.UserPreferences;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -19,11 +20,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        boolean darkTheme = getSharedPreferences("scan_learn_settings", MODE_PRIVATE)
-                .getBoolean("dark_theme", false);
-        AppCompatDelegate.setDefaultNightMode(darkTheme
-                ? AppCompatDelegate.MODE_NIGHT_YES
-                : AppCompatDelegate.MODE_NIGHT_NO);
+        int themeMode = getSharedPreferences(UserPreferences.PREF_NAME, MODE_PRIVATE)
+                .getInt(UserPreferences.KEY_THEME_MODE, UserPreferences.THEME_SYSTEM);
+        AppCompatDelegate.setDefaultNightMode(toNightMode(themeMode));
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -50,5 +49,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onSupportNavigateUp() {
         return navController.navigateUp() || super.onSupportNavigateUp();
+    }
+
+    private int toNightMode(int themeMode) {
+        if (themeMode == UserPreferences.THEME_LIGHT) {
+            return AppCompatDelegate.MODE_NIGHT_NO;
+        }
+        if (themeMode == UserPreferences.THEME_DARK) {
+            return AppCompatDelegate.MODE_NIGHT_YES;
+        }
+        return AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
     }
 }

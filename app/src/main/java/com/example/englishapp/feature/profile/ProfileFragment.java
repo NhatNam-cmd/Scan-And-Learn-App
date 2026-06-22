@@ -25,6 +25,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -32,6 +35,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class ProfileFragment extends Fragment {
     private FragmentProfileBinding binding;
     private AuthViewModel viewModel;
+    private ProfileViewModel profileViewModel;
 
     @Nullable
     @Override
@@ -45,11 +49,14 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(AuthViewModel.class);
+        profileViewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
         binding.btnSettings.setOnClickListener(v ->
                 NavHostFragment.findNavController(this).navigate(R.id.nav_settings));
         binding.btnLogout.setOnClickListener(v -> logout());
         viewModel.getUiState().observe(getViewLifecycleOwner(), this::render);
+        profileViewModel.getStats().observe(getViewLifecycleOwner(), this::renderStats);
         viewModel.refreshUser();
+        profileViewModel.loadStats();
     }
 
     @Override
@@ -68,6 +75,7 @@ public class ProfileFragment extends Fragment {
         }
         binding.tvProfileName.setText(nonEmpty(state.getDisplayName(), "Nguoi hoc"));
         binding.tvProfileEmail.setText(nonEmpty(state.getEmail(), ""));
+        binding.tvSyncStatus.setText("Đồng bộ Firebase: đã đăng nhập bằng Google");
         loadAvatar(state.getPhotoUrl());
     }
 
@@ -106,5 +114,23 @@ public class ProfileFragment extends Fragment {
 
     private String nonEmpty(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;
+    }
+
+    private void renderStats(ProfileStats stats) {
+        if (binding == null || stats == null) {
+            return;
+        }
+        binding.tvTotalWords.setText(String.valueOf(stats.getTotalWords()));
+        binding.tvStreakDays.setText(String.valueOf(stats.getStreakDays()));
+        binding.tvCompletedQuizzes.setText(String.valueOf(stats.getCompletedQuizzes()));
+        binding.tvMasteredWords.setText(String.format(Locale.getDefault(),
+                "Đã thuộc: %d/%d từ", stats.getMasteredWords(), stats.getTotalWords()));
+        String time = new SimpleDateFormat("HH:mm, dd/MM/yyyy", Locale.getDefault())
+                .format(new Date(stats.getLastSyncedAt()));
+        if (viewModel != null && viewModel.isSignedIn()) {
+            binding.tvSyncStatus.setText("Đồng bộ Firebase: sẵn sàng • Cập nhật " + time);
+        } else {
+            binding.tvSyncStatus.setText("Đồng bộ Firebase: chưa đăng nhập");
+        }
     }
 }
