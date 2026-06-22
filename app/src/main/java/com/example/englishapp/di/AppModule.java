@@ -32,6 +32,6 @@ public class AppModule {
     
     @Provides @Singleton
     public static SharedPreferences provideSharedPreferences(@ApplicationContext Context context) {
-        return context.getSharedPreferences("scan_learn_settings", Context.MODE_PRIVATE);
+        return context.getSharedPreferences(com.example.englishapp.core.datastore.UserPreferences.PREF_NAME, Context.MODE_PRIVATE);
     }
 }

@@ -40,6 +40,7 @@ espressoCore = "3.6.1"
 
 googleServices = "4.4.2"
 appcompatVersion = "1.7.1"
+playServicesAuth = "21.2.0"
 
 [libraries]
 
@@ -176,6 +177,8 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 # -------------------------
 

@@ -1,42 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_word_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    android:background="@drawable/bg_word_item_selector"
+    android:layout_marginBottom="10dp"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?android:attr/selectableItemBackground"
-    android:gravity="center_vertical"
-    android:minHeight="72dp"
-    android:orientation="horizontal"
-    android:padding="14dp">
+    app:cardBackgroundColor="@color/light_surface"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:cardUseCompatPadding="false">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:background="@drawable/bg_word_item_ripple"
+        android:gravity="center_vertical"
+        android:minHeight="72dp"
+        android:orientation="horizontal"
+        android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tv_word"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/light_on_background"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+        <!-- Left: Word icon circle -->
+        <FrameLayout
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_marginEnd="14dp">
 
-        <TextView
-            android:id="@+id/tv_meaning"
-            android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tv_word_initial"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_word_initial_circle"
+                android:gravity="center"
+                android:textColor="@color/light_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- Center: word + meaning -->
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="@color/light_secondary"
-            android:textSize="14sp" />
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_word"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/light_on_background"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_meaning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/light_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Right: checkmark -->
+        <CheckBox
+            android:id="@+id/cb_selected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:buttonTint="@color/light_primary"
+            android:clickable="false"
+            android:focusable="false" />
     </LinearLayout>
-
-    <CheckBox
-        android:id="@+id/cb_selected"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-</LinearLayout>
+</androidx.cardview.widget.CardView>

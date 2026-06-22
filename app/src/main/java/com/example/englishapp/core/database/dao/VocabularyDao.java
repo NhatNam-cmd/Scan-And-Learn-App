@@ -40,6 +40,12 @@ public interface VocabularyDao {
     @Query("SELECT COUNT(*) FROM vocabulary WHERE isMastered = 0")
     int countUnmasteredWords();
 
+    @Query("SELECT COUNT(*) FROM vocabulary")
+    int countAllWords();
+
+    @Query("SELECT COUNT(*) FROM vocabulary WHERE isMastered = 1")
+    int countMasteredWords();
+
     @Query("SELECT COUNT(*) FROM vocabulary WHERE word = :word")
     int countWord(String word);
 }

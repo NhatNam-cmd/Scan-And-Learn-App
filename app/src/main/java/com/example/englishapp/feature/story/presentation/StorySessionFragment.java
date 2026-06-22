@@ -3,6 +3,7 @@ package com.example.englishapp.feature.story.presentation;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
@@ -10,8 +11,7 @@ import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.GridLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,7 +24,9 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.example.englishapp.R;
 import com.example.englishapp.feature.story.domain.StoryBlank;
 import com.example.englishapp.feature.story.domain.StoryGameData;
-import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,9 +41,11 @@ public class StorySessionFragment extends Fragment {
     private StoryViewModel viewModel;
     private TextView tvTitle;
     private TextView tvStory;
-    private GridLayout answerGrid;
-    private GridLayout wordGrid;
+    private ChipGroup chipGroupAnswers;
+    private ChipGroup chipGroupWords;
     private Button btnSubmit;
+    private ProgressBar pbFillProgress;
+    private TextView tvFillCounter;
     private final List<String> shuffledWords = new ArrayList<>();
 
     @Nullable
@@ -57,9 +61,11 @@ public class StorySessionFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(StoryViewModel.class);
         tvTitle = view.findViewById(R.id.tv_story_title);
         tvStory = view.findViewById(R.id.tv_story_content);
-        answerGrid = view.findViewById(R.id.grid_answers);
-        wordGrid = view.findViewById(R.id.grid_words);
+        chipGroupAnswers = view.findViewById(R.id.chip_group_answers);
+        chipGroupWords = view.findViewById(R.id.chip_group_words);
         btnSubmit = view.findViewById(R.id.btn_submit_story);
+        pbFillProgress = view.findViewById(R.id.pb_fill_progress);
+        tvFillCounter = view.findViewById(R.id.tv_fill_counter);
 
         viewModel.getCurrentStory().observe(getViewLifecycleOwner(), story -> {
             if (story == null) {
@@ -88,8 +94,18 @@ public class StorySessionFragment extends Fragment {
             return;
         }
         tvStory.setText(buildStoryText(story, answers));
-        renderAnswerButtons(answers);
-        renderWordButtons(story, answers);
+        renderAnswerChips(answers);
+        renderWordChips(answers);
+
+        int filled = 0;
+        for (String a : answers) {
+            if (a != null && !a.isEmpty()) filled++;
+        }
+        int total = answers.size();
+        int progress = total > 0 ? (filled * 100 / total) : 0;
+        pbFillProgress.setProgress(progress);
+        tvFillCounter.setText(filled + "/" + total + " ô");
+
         boolean canSubmit = !answers.contains("");
         btnSubmit.setEnabled(canSubmit);
         btnSubmit.setAlpha(canSubmit ? 1f : 0.45f);
@@ -97,75 +113,140 @@ public class StorySessionFragment extends Fragment {
 
     private SpannableStringBuilder buildStoryText(StoryGameData story, List<String> answers) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
-        String text = story.getStory();
-        int searchStart = 0;
-        for (int i = 0; i < answers.size(); i++) {
-            String token = "[BLANK_" + (i + 1) + "]";
-            int tokenIndex = text.indexOf(token, searchStart);
-            if (tokenIndex < 0) {
-                continue;
+
+        // Dùng regex scan tuyến tính thay vì indexOf tuần tự.
+        // Đảm bảo: (1) token thừa bị loại bỏ, (2) không bao giờ lọt [BLANK_N] ra ngoài.
+        java.util.regex.Pattern blankPattern =
+                java.util.regex.Pattern.compile("\\[BLANK_(\\d+)\\]");
+        java.util.regex.Matcher matcher = blankPattern.matcher(story.getStory());
+
+        String[] circledNumbers = {"①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"};
+
+        int lastEnd = 0;
+        while (matcher.find()) {
+            // Append phần text thuần trước token này
+            if (matcher.start() > lastEnd) {
+                builder.append(story.getStory(), lastEnd, matcher.start());
             }
-            builder.append(text, searchStart, tokenIndex);
-            String answer = answers.get(i);
-            boolean isFilled = answer != null && !answer.isEmpty();
-            String value = isFilled ? answer : "________";
-            int start = builder.length();
-            builder.append(value);
-            int end = builder.length();
-            builder.setSpan(new UnderlineSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            if (isFilled) {
-                builder.setSpan(new ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.light_primary)),
-                        start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                builder.setSpan(new StyleSpan(Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            int blankNumber = Integer.parseInt(matcher.group(1)); // 1-based
+            int answerIndex  = blankNumber - 1;                   // 0-based
+
+            if (answerIndex >= 0 && answerIndex < answers.size()) {
+                String answer = answers.get(answerIndex);
+                boolean isFilled = answer != null && !answer.isEmpty();
+                int start = builder.length();
+
+                if (isFilled) {
+                    builder.append(" ").append(answer).append(" ");
+                    int end = builder.length();
+                    builder.setSpan(new UnderlineSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(
+                            new ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.light_primary)),
+                            start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(new StyleSpan(Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                } else {
+                    String label = answerIndex < circledNumbers.length
+                            ? circledNumbers[answerIndex]
+                            : ("(" + blankNumber + ")");
+                    builder.append(" ").append(label).append(" ");
+                    int end = builder.length();
+                    builder.setSpan(new UnderlineSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(
+                            new ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.light_secondary)),
+                            start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(new BackgroundColorSpan(0x1A0D9488),
+                            start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
             }
-            searchStart = tokenIndex + token.length();
+            // Blank nằm ngoài danh sách answers (token thừa do AI) → bỏ qua, không append gì
+
+            lastEnd = matcher.end();
         }
-        if (searchStart < text.length()) {
-            builder.append(text.substring(searchStart));
+
+        // Append phần text thuần còn lại sau token cuối
+        if (lastEnd < story.getStory().length()) {
+            builder.append(story.getStory(), lastEnd, story.getStory().length());
         }
+
         return builder;
     }
 
-    private void renderAnswerButtons(List<String> answers) {
-        answerGrid.removeAllViews();
-        answerGrid.setColumnCount(2);
+    private void renderAnswerChips(List<String> answers) {
+        chipGroupAnswers.removeAllViews();
         for (int i = 0; i < answers.size(); i++) {
             String answer = answers.get(i);
-            MaterialButton button = makeChip(answer.isEmpty() ? "Ô " + (i + 1) : answer);
+            boolean isFilled = answer != null && !answer.isEmpty();
+            Chip chip = makeAnswerChip(isFilled ? answer : "Ô " + (i + 1), isFilled);
             final int index = i;
-            button.setEnabled(!answer.isEmpty());
-            button.setOnClickListener(v -> viewModel.clearBlank(index));
-            answerGrid.addView(button);
-            animateChip(button);
+            if (isFilled) {
+                chip.setOnClickListener(v -> {
+                    animateChipRemove(chip);
+                    viewModel.clearBlank(index);
+                });
+            }
+            chipGroupAnswers.addView(chip);
+            animateChip(chip);
         }
     }
 
-    private void renderWordButtons(StoryGameData story, List<String> answers) {
-        wordGrid.removeAllViews();
-        wordGrid.setColumnCount(2);
+    private void renderWordChips(List<String> answers) {
+        chipGroupWords.removeAllViews();
         Set<String> used = new HashSet<>(answers);
         for (String word : shuffledWords) {
             if (used.contains(word)) {
                 continue;
             }
-            MaterialButton button = makeChip(word);
-            button.setOnClickListener(v -> viewModel.fillNextBlank(word));
-            wordGrid.addView(button);
-            animateChip(button);
+            Chip chip = makeWordChip(word);
+            chip.setOnClickListener(v -> {
+                animateChipSelect(chip);
+                viewModel.fillNextBlank(word);
+            });
+            chipGroupWords.addView(chip);
+            animateChip(chip);
         }
     }
 
-    private MaterialButton makeChip(String text) {
-        MaterialButton button = new MaterialButton(requireContext());
-        button.setText(text);
-        button.setAllCaps(false);
-        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = 0;
-        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        params.setMargins(8, 8, 8, 8);
-        button.setLayoutParams(params);
-        return button;
+    private Chip makeWordChip(String text) {
+        Chip chip = new Chip(requireContext());
+        chip.setText(text);
+        chip.setChipBackgroundColorResource(R.color.light_primary_container);
+        chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.light_primary));
+        chip.setChipStrokeColorResource(R.color.light_primary);
+        chip.setChipStrokeWidth(dpToPx(1.5f));
+        chip.setTextSize(14f);
+        chip.setTypeface(chip.getTypeface(), Typeface.BOLD);
+        chip.setClickable(true);
+        chip.setFocusable(true);
+        chip.setChipCornerRadius(dpToPx(20f));
+        return chip;
+    }
+
+    private Chip makeAnswerChip(String text, boolean isFilled) {
+        Chip chip = new Chip(requireContext());
+        chip.setText(text);
+        if (isFilled) {
+            chip.setChipBackgroundColorResource(R.color.light_secondary_container);
+            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.light_on_secondary_container));
+            chip.setChipStrokeColorResource(R.color.light_secondary);
+            chip.setChipStrokeWidth(dpToPx(1.5f));
+            chip.setCloseIconVisible(true);
+            chip.setCloseIconTint(ContextCompat.getColorStateList(requireContext(), R.color.light_secondary));
+        } else {
+            chip.setChipBackgroundColorResource(android.R.color.transparent);
+            chip.setTextColor(ContextCompat.getColor(requireContext(), R.color.light_secondary));
+            chip.setChipStrokeWidth(dpToPx(1.5f));
+            chip.setChipStrokeColor(ContextCompat.getColorStateList(requireContext(), R.color.light_secondary));
+            chip.setEnabled(false);
+            chip.setAlpha(0.5f);
+        }
+        chip.setTextSize(13f);
+        chip.setChipCornerRadius(dpToPx(20f));
+        return chip;
+    }
+
+    private float dpToPx(float dp) {
+        return dp * requireContext().getResources().getDisplayMetrics().density;
     }
 
     private void animateEnter(View view) {
@@ -175,9 +256,19 @@ public class StorySessionFragment extends Fragment {
     }
 
     private void animateChip(View view) {
-        view.setScaleX(0.94f);
-        view.setScaleY(0.94f);
+        view.setScaleX(0.85f);
+        view.setScaleY(0.85f);
         view.setAlpha(0f);
-        view.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(140L).start();
+        view.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(180L).start();
+    }
+
+    private void animateChipSelect(View view) {
+        view.animate().scaleX(0.88f).scaleY(0.88f).setDuration(80L)
+                .withEndAction(() -> view.animate().scaleX(1f).scaleY(1f).setDuration(80L).start())
+                .start();
+    }
+
+    private void animateChipRemove(View view) {
+        view.animate().scaleX(0.7f).scaleY(0.7f).alpha(0f).setDuration(120L).start();
     }
 }

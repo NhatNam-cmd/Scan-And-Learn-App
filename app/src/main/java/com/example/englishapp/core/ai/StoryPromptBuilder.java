@@ -6,12 +6,23 @@ import java.util.List;
 
 public class StoryPromptBuilder {
     public String buildPrompt(List<VocabularyEntity> words) {
+        int wordCount = words.size();
         StringBuilder builder = new StringBuilder();
-        builder.append("Create a short English learning story for Vietnamese learners. ");
-        builder.append("Use every target word exactly once as a blank token in the story. ");
-        builder.append("Return only valid JSON with keys: title, story, blanks. ");
-        builder.append("The story must contain [BLANK_1], [BLANK_2]... matching the blanks array order. ");
-        builder.append("Each blank item must contain index, word, meaning. Target words: ");
+        builder.append("You are an English learning story generator for Vietnamese learners. ");
+        builder.append("Create a short, coherent English story using EXACTLY the following ")
+               .append(wordCount).append(" target words as fill-in-the-blank tokens. ");
+        builder.append("STRICT RULES: ");
+        builder.append("(1) The story field must contain EXACTLY these tokens in order: ");
+        for (int i = 1; i <= wordCount; i++) {
+            builder.append("[BLANK_").append(i).append("]");
+            if (i < wordCount) builder.append(", ");
+        }
+        builder.append(". ");
+        builder.append("(2) Do NOT add extra [BLANK_N] tokens beyond the ones listed above. ");
+        builder.append("(3) The blanks array must have EXACTLY ").append(wordCount).append(" items. ");
+        builder.append("(4) Return ONLY valid JSON with keys: title (string), story (string), blanks (array). ");
+        builder.append("(5) Each blank item: { \"index\": N, \"word\": \"...\", \"meaning\": \"...\" }. ");
+        builder.append("Target words: ");
         for (int i = 0; i < words.size(); i++) {
             VocabularyEntity word = words.get(i);
             builder.append(i + 1)

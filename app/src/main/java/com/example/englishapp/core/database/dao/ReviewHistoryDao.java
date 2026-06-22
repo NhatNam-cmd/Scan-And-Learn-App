@@ -18,4 +18,7 @@ public interface ReviewHistoryDao {
 
     @Query("SELECT * FROM review_history WHERE vocabularyId = :vocabId ORDER BY reviewedAt DESC")
     LiveData<List<ReviewHistoryEntity>> getHistoryByVocabularyId(long vocabId);
+
+    @Query("SELECT DISTINCT reviewedAt / 86400000 FROM review_history ORDER BY reviewedAt / 86400000 DESC")
+    List<Long> getReviewedDaysDesc();
 }

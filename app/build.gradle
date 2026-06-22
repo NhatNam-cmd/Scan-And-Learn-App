@@ -4,6 +4,12 @@ plugins {
     id 'androidx.room' version '2.6.1'
 }
 
+if (file("google-services.json").exists()) {
+    apply plugin: "com.google.gms.google-services"
+} else {
+    logger.warn("Missing app/google-services.json. Firebase Google Sign-In will need this file before runtime testing.")
+}
+
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -109,4 +115,5 @@ dependencies {
     implementation platform(libs.firebase.bom)
     implementation libs.firebase.auth
     implementation libs.firebase.firestore
+    implementation libs.play.services.auth
 }

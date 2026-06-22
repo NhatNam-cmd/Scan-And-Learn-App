@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,6 +20,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.englishapp.R;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
@@ -27,9 +31,10 @@ public class StoryWordSelectionFragment extends Fragment {
     private WordSelectionAdapter adapter;
     private Button btnStart;
     private TextView tvCounter;
-    private TextView tvEmptyWords;
+    private LinearLayout layoutEmptyWords;
     private ProgressBar progressBar;
     private RecyclerView recyclerView;
+    private final List<View> progressDots = new ArrayList<>();
 
     @Nullable
     @Override
@@ -45,8 +50,17 @@ public class StoryWordSelectionFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(StoryViewModel.class);
         btnStart = view.findViewById(R.id.btn_start_story);
         tvCounter = view.findViewById(R.id.tv_selection_counter);
-        tvEmptyWords = view.findViewById(R.id.tv_empty_words);
+        layoutEmptyWords = view.findViewById(R.id.layout_empty_words);
         progressBar = view.findViewById(R.id.progress_story_generation);
+
+        // Collect progress dots
+        int[] dotIds = {
+            R.id.dot_1, R.id.dot_2, R.id.dot_3, R.id.dot_4, R.id.dot_5,
+            R.id.dot_6, R.id.dot_7, R.id.dot_8, R.id.dot_9, R.id.dot_10
+        };
+        for (int id : dotIds) {
+            progressDots.add(view.findViewById(id));
+        }
 
         recyclerView = view.findViewById(R.id.rv_words);
         adapter = new WordSelectionAdapter(word -> viewModel.toggleSelection(word.getVocabularyId()));
@@ -57,14 +71,17 @@ public class StoryWordSelectionFragment extends Fragment {
             adapter.submitWords(words);
             boolean isEmpty = words == null || words.isEmpty();
             recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
-            tvEmptyWords.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+            layoutEmptyWords.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         });
+
         viewModel.getSelectedIds().observe(getViewLifecycleOwner(), ids -> {
             adapter.submitSelectedIds(ids);
             int count = ids == null ? 0 : ids.size();
-            tvCounter.setText(count + "/10 từ đã chọn");
+            tvCounter.setText(count + " / 10 từ đã chọn");
+            updateProgressDots(count);
             updateStartButton(count, Boolean.TRUE.equals(viewModel.getLoading().getValue()));
         });
+
         viewModel.getLoading().observe(getViewLifecycleOwner(), loading -> {
             boolean isLoading = Boolean.TRUE.equals(loading);
             progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
@@ -72,6 +89,7 @@ public class StoryWordSelectionFragment extends Fragment {
                     ? 0 : viewModel.getSelectedIds().getValue().size();
             updateStartButton(count, isLoading);
         });
+
         viewModel.getCurrentStory().observe(getViewLifecycleOwner(), story -> {
             if (story != null && progressBar.getVisibility() == View.GONE) {
                 if (story.isOffline()) {
@@ -82,7 +100,23 @@ public class StoryWordSelectionFragment extends Fragment {
                 NavHostFragment.findNavController(this).navigate(R.id.nav_story_session);
             }
         });
+
         btnStart.setOnClickListener(v -> viewModel.generateStory());
+    }
+
+    private void updateProgressDots(int count) {
+        for (int i = 0; i < progressDots.size(); i++) {
+            View dot = progressDots.get(i);
+            boolean active = i < count;
+            dot.setBackgroundResource(active
+                    ? R.drawable.bg_progress_dot_active
+                    : R.drawable.bg_progress_dot_inactive);
+            dot.animate()
+                    .scaleX(active ? 1.3f : 1f)
+                    .scaleY(active ? 1.3f : 1f)
+                    .setDuration(150L)
+                    .start();
+        }
     }
 
     private void updateStartButton(int count, boolean isLoading) {
@@ -90,11 +124,14 @@ public class StoryWordSelectionFragment extends Fragment {
         btnStart.setEnabled(canStart);
         btnStart.setAlpha(canStart ? 1f : 0.45f);
         if (isLoading) {
-            btnStart.setText("Đang tạo truyện...");
+            btnStart.setText("⏳ Đang tạo truyện...");
         } else if (count < 5) {
-            btnStart.setText("Chọn ít nhất 5 từ");
+            btnStart.setText("Chọn ít nhất 5 từ (" + count + "/5)");
         } else {
-            btnStart.setText("Bắt đầu tạo truyện");
+            btnStart.setText("✨ Bắt đầu tạo truyện →");
+            btnStart.animate().scaleX(1.03f).scaleY(1.03f).setDuration(220L)
+                    .withEndAction(() -> btnStart.animate().scaleX(1f).scaleY(1f).setDuration(220L).start())
+                    .start();
         }
     }
 
