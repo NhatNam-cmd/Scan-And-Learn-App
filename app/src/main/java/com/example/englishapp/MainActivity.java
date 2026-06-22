@@ -23,6 +23,14 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         NavigationUI.setupWithNavController(bottomNav, navController);
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            int destinationId = destination.getId();
+            if (destinationId == R.id.nav_story_word_selection
+                    || destinationId == R.id.nav_story_session
+                    || destinationId == R.id.nav_story_result) {
+                bottomNav.getMenu().findItem(R.id.nav_story).setChecked(true);
+            }
+        });
     }
 
     @Override
