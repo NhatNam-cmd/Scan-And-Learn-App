@@ -25,16 +25,22 @@ public class StoryValidator {
             for (int i = 0; i < blanks.size(); i++) {
                 StoryBlank blank = blanks.get(i);
                 if (blank == null || isBlank(blank.getWord())) {
-                    return null;
+                    // Bỏ qua blank không hợp lệ thay vì reject cả story
+                    continue;
                 }
                 int expectedIndex = i + 1;
                 if (!data.getStory().contains("[BLANK_" + expectedIndex + "]")) {
-                    return null;
+                    // Token không có trong story — bỏ qua blank này,
+                    // renderer sẽ tự dọn sạch token thừa trong text.
+                    continue;
                 }
                 if (blank.getIndex() <= 0) {
                     blank.setIndex(expectedIndex);
                 }
                 validBlanks.add(blank);
+            }
+            if (validBlanks.isEmpty()) {
+                return null;
             }
             data.setBlanks(validBlanks);
             return data;

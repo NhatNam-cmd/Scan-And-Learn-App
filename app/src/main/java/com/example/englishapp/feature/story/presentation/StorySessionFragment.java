@@ -3,6 +3,7 @@ package com.example.englishapp.feature.story.presentation;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
@@ -112,32 +113,62 @@ public class StorySessionFragment extends Fragment {
 
     private SpannableStringBuilder buildStoryText(StoryGameData story, List<String> answers) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
-        String text = story.getStory();
-        int searchStart = 0;
-        for (int i = 0; i < answers.size(); i++) {
-            String token = "[BLANK_" + (i + 1) + "]";
-            int tokenIndex = text.indexOf(token, searchStart);
-            if (tokenIndex < 0) {
-                continue;
+
+        // Dùng regex scan tuyến tính thay vì indexOf tuần tự.
+        // Đảm bảo: (1) token thừa bị loại bỏ, (2) không bao giờ lọt [BLANK_N] ra ngoài.
+        java.util.regex.Pattern blankPattern =
+                java.util.regex.Pattern.compile("\\[BLANK_(\\d+)\\]");
+        java.util.regex.Matcher matcher = blankPattern.matcher(story.getStory());
+
+        String[] circledNumbers = {"①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩"};
+
+        int lastEnd = 0;
+        while (matcher.find()) {
+            // Append phần text thuần trước token này
+            if (matcher.start() > lastEnd) {
+                builder.append(story.getStory(), lastEnd, matcher.start());
             }
-            builder.append(text, searchStart, tokenIndex);
-            String answer = answers.get(i);
-            boolean isFilled = answer != null && !answer.isEmpty();
-            String value = isFilled ? answer : "________";
-            int start = builder.length();
-            builder.append(value);
-            int end = builder.length();
-            builder.setSpan(new UnderlineSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            if (isFilled) {
-                builder.setSpan(new ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.light_primary)),
-                        start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                builder.setSpan(new StyleSpan(Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            int blankNumber = Integer.parseInt(matcher.group(1)); // 1-based
+            int answerIndex  = blankNumber - 1;                   // 0-based
+
+            if (answerIndex >= 0 && answerIndex < answers.size()) {
+                String answer = answers.get(answerIndex);
+                boolean isFilled = answer != null && !answer.isEmpty();
+                int start = builder.length();
+
+                if (isFilled) {
+                    builder.append(" ").append(answer).append(" ");
+                    int end = builder.length();
+                    builder.setSpan(new UnderlineSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(
+                            new ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.light_primary)),
+                            start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(new StyleSpan(Typeface.BOLD), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                } else {
+                    String label = answerIndex < circledNumbers.length
+                            ? circledNumbers[answerIndex]
+                            : ("(" + blankNumber + ")");
+                    builder.append(" ").append(label).append(" ");
+                    int end = builder.length();
+                    builder.setSpan(new UnderlineSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(
+                            new ForegroundColorSpan(ContextCompat.getColor(requireContext(), R.color.light_secondary)),
+                            start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    builder.setSpan(new BackgroundColorSpan(0x1A0D9488),
+                            start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
             }
-            searchStart = tokenIndex + token.length();
+            // Blank nằm ngoài danh sách answers (token thừa do AI) → bỏ qua, không append gì
+
+            lastEnd = matcher.end();
         }
-        if (searchStart < text.length()) {
-            builder.append(text.substring(searchStart));
+
+        // Append phần text thuần còn lại sau token cuối
+        if (lastEnd < story.getStory().length()) {
+            builder.append(story.getStory(), lastEnd, story.getStory().length());
         }
+
         return builder;
     }
 
