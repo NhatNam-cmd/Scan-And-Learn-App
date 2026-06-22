@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_background"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/tv_result_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Kết quả"
+        android:textColor="@color/light_on_background"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_result_score"
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/bg_empty_state"
+        android:gravity="center"
+        android:textColor="@color/light_primary"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_result_exp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:textColor="@color/light_secondary"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/btn_play_again"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/bg_story_button_primary"
+        android:text="Chơi tiếp"
+        android:textAllCaps="false"
+        android:textColor="@color/light_on_primary" />
+
+    <Button
+        android:id="@+id/btn_story_home"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_story_button_secondary"
+        android:text="Quay lại trang chủ"
+        android:textAllCaps="false"
+        android:textColor="@color/light_on_secondary" />
+</LinearLayout>
