@@ -30,7 +30,11 @@ public class StoryFallbackBuilder {
             return "Today I learned how to use " + blank + " in a clear sentence.";
         }
         String word = vocabulary.getWord();
-        return example.replaceAll("(?i)\\b" + java.util.regex.Pattern.quote(word) + "\\b", blank);
+        String sentence = example.replaceAll("(?i)\\b" + java.util.regex.Pattern.quote(word) + "\\b", blank);
+        if (sentence.equals(example)) {
+            return example + " The key word is " + blank + ".";
+        }
+        return sentence;
     }
 }
 

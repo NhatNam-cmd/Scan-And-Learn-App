@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -48,10 +49,10 @@ public class StoryWordSelectionFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         animateEnter(view);
         viewModel = new ViewModelProvider(requireActivity()).get(StoryViewModel.class);
-        btnStart = view.findViewById(R.id.btn_start_story);
-        tvCounter = view.findViewById(R.id.tv_selection_counter);
+        btnStart        = view.findViewById(R.id.btn_start_story);
+        tvCounter       = view.findViewById(R.id.tv_selection_counter);
         layoutEmptyWords = view.findViewById(R.id.layout_empty_words);
-        progressBar = view.findViewById(R.id.progress_story_generation);
+        progressBar     = view.findViewById(R.id.progress_story_generation);
 
         // Collect progress dots
         int[] dotIds = {
@@ -67,11 +68,31 @@ public class StoryWordSelectionFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
 
+        // Empty state "Quét sách" button – navigate to scan tab
+        Button btnGoScan = view.findViewById(R.id.btn_go_scan);
+        if (btnGoScan != null) {
+            btnGoScan.setOnClickListener(v -> {
+                // Navigate to the scan destination in the main navigation graph
+                try {
+                    NavHostFragment.findNavController(this).navigate(R.id.nav_scan);
+                } catch (Exception e) {
+                    // If nav_scan doesn't exist in current graph, show a hint
+                    Toast.makeText(requireContext(),
+                            "Hãy chuyển sang tab Quét để quét sách mới!",
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
         viewModel.getWords().observe(getViewLifecycleOwner(), words -> {
             adapter.submitWords(words);
             boolean isEmpty = words == null || words.isEmpty();
             recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
-            layoutEmptyWords.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+            if (isEmpty) {
+                showEmptyState();
+            } else {
+                layoutEmptyWords.setVisibility(View.GONE);
+            }
         });
 
         viewModel.getSelectedIds().observe(getViewLifecycleOwner(), ids -> {
@@ -102,6 +123,36 @@ public class StoryWordSelectionFragment extends Fragment {
         });
 
         btnStart.setOnClickListener(v -> viewModel.generateStory());
+    }
+
+    /** Show empty state with a staggered spring animation */
+    private void showEmptyState() {
+        layoutEmptyWords.setVisibility(View.VISIBLE);
+        layoutEmptyWords.setAlpha(0f);
+        layoutEmptyWords.setTranslationY(40f);
+        layoutEmptyWords.setScaleX(0.90f);
+        layoutEmptyWords.setScaleY(0.90f);
+        layoutEmptyWords.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(450L)
+                .setInterpolator(new OvershootInterpolator(1.2f))
+                .start();
+
+        // Stagger animate children for extra polish
+        for (int i = 0; i < layoutEmptyWords.getChildCount(); i++) {
+            View child = layoutEmptyWords.getChildAt(i);
+            child.setAlpha(0f);
+            child.setTranslationY(20f);
+            child.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setStartDelay(100L + i * 80L)
+                    .setDuration(320L)
+                    .start();
+        }
     }
 
     private void updateProgressDots(int count) {

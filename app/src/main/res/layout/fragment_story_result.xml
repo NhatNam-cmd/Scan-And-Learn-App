@@ -90,10 +90,84 @@
             android:textColor="@color/light_secondary"
             android:textSize="15sp" />
 
+        <!-- ===== Colored story review panel ===== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_panel_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Panel header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="📝 Xem lại câu chuyện"
+                    android:textColor="@color/light_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <!-- Legend: green = correct, red = wrong -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="#FF16A34A"
+                        android:backgroundTint="@null" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:text="Đúng"
+                        android:textColor="@color/result_correct"
+                        android:textSize="11sp" />
+
+                    <View
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="#FFDC2626"
+                        android:backgroundTint="@null" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sai"
+                        android:textColor="@color/result_wrong"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Colored story text -->
+            <TextView
+                android:id="@+id/tv_result_story"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingMultiplier="1.7"
+                android:textColor="@color/light_on_background"
+                android:textSize="16sp" />
+        </LinearLayout>
+
         <!-- Spacer -->
         <View
             android:layout_width="match_parent"
-            android:layout_height="32dp" />
+            android:layout_height="24dp" />
 
         <!-- Action buttons -->
         <Button
