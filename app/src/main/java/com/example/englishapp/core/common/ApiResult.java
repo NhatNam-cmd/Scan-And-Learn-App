@@ -7,6 +7,7 @@ import java.util.Objects;
 
 /**
  * Sealed-class pattern in Java: represents the result of an API call.
+ * Đã được bổ sung các hàm tương thích ngược (create, getInstance) để support merge code.
  *
  * @param <T> the type of data on success / fallback
  */
@@ -16,7 +17,7 @@ public abstract class ApiResult<T> {
     private ApiResult() {}
 
     /**
-     * Helper methods to create ApiResult instances
+     * Helper methods to create ApiResult instances (Chuẩn của nhánh Core)
      */
     @NonNull
     public static <T> ApiResult<T> success(@Nullable T data) {
@@ -46,6 +47,12 @@ public abstract class ApiResult<T> {
         @Nullable
         public T getData() {
             return data;
+        }
+
+        // Thêm hàm create() để tương thích với code của nhánh Scan
+        @NonNull
+        public static <T> Success<T> create(@Nullable T data) {
+            return new Success<>(data);
         }
 
         @Override
@@ -85,6 +92,17 @@ public abstract class ApiResult<T> {
             this(message, null);
         }
 
+        // Thêm hàm create() để tương thích với code của nhánh Scan
+        @NonNull
+        public static <T> Error<T> create(@NonNull String message) {
+            return new Error<>(message);
+        }
+
+        @NonNull
+        public static <T> Error<T> create(@NonNull String message, @Nullable Throwable exception) {
+            return new Error<>(message, exception);
+        }
+
         @NonNull
         public String getMessage() {
             return message;
@@ -119,14 +137,15 @@ public abstract class ApiResult<T> {
     /**
      * Singleton representing a loading state.
      */
-    public static final class Loading extends ApiResult<Void> {
-        private static final Loading INSTANCE = new Loading();
+    public static final class Loading<T> extends ApiResult<T> {
+        private static final Loading<?> INSTANCE = new Loading<>();
 
         private Loading() {}
 
+        @SuppressWarnings("unchecked")
         @NonNull
-        public static Loading getInstance() {
-            return INSTANCE;
+        public static <T> Loading<T> getInstance() {
+            return (Loading<T>) INSTANCE;
         }
 
         @NonNull
@@ -143,16 +162,22 @@ public abstract class ApiResult<T> {
         private final T data;
         private final String reason;
 
-        public Fallback(@NonNull T data, @NonNull String reason) {
+        public Fallback(@Nullable T data, @NonNull String reason) {
             this.data = data;
             this.reason = reason;
         }
 
-        public Fallback(@NonNull T data) {
+        public Fallback(@Nullable T data) {
             this(data, "AI Quota Exceeded or Network Error");
         }
 
+        // Thêm getInstance() để xử lý các case gọi Fallback không truyền param
         @NonNull
+        public static <T> Fallback<T> getInstance() {
+            return new Fallback<>(null, "Fallback state activated");
+        }
+
+        @Nullable
         public T getData() {
             return data;
         }

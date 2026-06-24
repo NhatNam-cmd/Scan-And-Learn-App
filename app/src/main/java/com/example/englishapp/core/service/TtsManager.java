@@ -1,5 +1,5 @@
 package com.example.englishapp.core.service;
-
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import android.content.Context;
 import android.speech.tts.TextToSpeech;
 import java.util.LinkedList;
@@ -16,7 +16,7 @@ public class TtsManager implements TextToSpeech.OnInitListener {
     private final Queue<String> pendingWords = new LinkedList<>();
 
     @Inject
-    public TtsManager(Context context) {
+    public TtsManager(@ApplicationContext Context context) {
         tts = new TextToSpeech(context, this);
     }
 

@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.englishapp.core.ui.ApiResult;
+import com.example.englishapp.core.common.ApiResult;
 import com.example.englishapp.core.database.entity.VocabularyEntity;
 import com.example.englishapp.core.model.VocabularyLookup;
 import com.example.englishapp.feature.scan.data.repository.ScanRepositoryImpl;

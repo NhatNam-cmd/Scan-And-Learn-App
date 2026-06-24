@@ -30,7 +30,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.englishapp.R;
 import com.example.englishapp.core.service.OcrManager;
-import com.example.englishapp.core.ui.ApiResult;
+import com.example.englishapp.core.common.ApiResult;
 import com.example.englishapp.core.database.entity.VocabularyEntity;
 import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -145,7 +145,8 @@ public class ScanFragment extends Fragment {
 
         Matrix matrix = new Matrix();
         matrix.postRotate(image.getImageInfo().getRotationDegrees());
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.Height(), matrix, true);
+        // FIX LỖI: Sửa bitmap.Height() thành bitmap.getHeight()
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 
     private void processImageWithOcr(Bitmap bitmap) {
@@ -172,9 +173,9 @@ public class ScanFragment extends Fragment {
 
     private void setupObservers() {
         viewModel.lookupResult.observe(getViewLifecycleOwner(), result -> {
-            if (result instanceof ApiResult.Loading) {
+            // FIX LỖI ÉP KIỂU: Dùng .getClass() thay vì instanceof
+            if (result.getClass() == ApiResult.Loading.class) {
                 loadingOverlay.setVisibility(View.VISIBLE);
-                captureButton.setEnabled(false);
             } else if (result instanceof ApiResult.Success) {
                 loadingOverlay.setVisibility(View.GONE);
                 captureButton.setEnabled(true);
@@ -186,13 +187,14 @@ public class ScanFragment extends Fragment {
             } else if (result instanceof ApiResult.Error) {
                 loadingOverlay.setVisibility(View.GONE);
                 captureButton.setEnabled(true);
-                Toast.makeText(requireContext(), ((ApiResult.Error) result).getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), ((ApiResult.Error<?>) result).getMessage(), Toast.LENGTH_LONG).show();
                 viewModel.resetLookupState();
             }
         });
 
         viewModel.saveResult.observe(getViewLifecycleOwner(), result -> {
-            if (result instanceof ApiResult.Loading) {
+            // FIX LỖI ÉP KIỂU: Dùng .getClass() thay vì instanceof
+            if (result.getClass() == ApiResult.Loading.class) {
                 loadingOverlay.setVisibility(View.VISIBLE);
             } else if (result instanceof ApiResult.Success) {
                 loadingOverlay.setVisibility(View.GONE);
@@ -205,7 +207,7 @@ public class ScanFragment extends Fragment {
                 viewModel.resetSaveState();
             } else if (result instanceof ApiResult.Error) {
                 loadingOverlay.setVisibility(View.GONE);
-                Toast.makeText(requireContext(), ((ApiResult.Error) result).getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), ((ApiResult.Error<?>) result).getMessage(), Toast.LENGTH_SHORT).show();
                 viewModel.resetSaveState();
             }
         });
@@ -234,7 +236,8 @@ public class ScanFragment extends Fragment {
                             pendingVocabulary.getExampleSentence(),
                             pendingVocabulary.getImagePath(),
                             pendingVocabulary.getAudioPath(),
-                            pendingVocabulary.getSourceType(),
+                            null, // FIX LỖI: Biến note truyền vào null
+                            pendingVocabulary.getSourceType(), // Biến sourceType
                             0,
                             false,
                             System.currentTimeMillis(),

@@ -48,4 +48,13 @@ public interface VocabularyDao {
 
     @Query("SELECT COUNT(*) FROM vocabulary WHERE word = :word")
     int countWord(String word);
+
+    @androidx.room.Query("SELECT * FROM vocabulary WHERE word = :word AND sourceType = :sourceType LIMIT 1")
+    VocabularyEntity findByWord(String word, String sourceType);
+
+    @androidx.room.Insert
+    long insert(VocabularyEntity entity);
+
+    @androidx.room.Update
+    void update(VocabularyEntity entity);
 }

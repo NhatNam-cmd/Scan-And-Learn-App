@@ -1,21 +1,21 @@
 package com.example.englishapp.feature.scan.data.repository;
 
 import androidx.lifecycle.MutableLiveData;
-import com.example.englishapp.core.ui.ApiResult;
+import com.example.englishapp.core.common.ApiResult;
 import com.example.englishapp.core.common.ExecutorProvider;
 import com.example.englishapp.core.database.dao.VocabularyDao;
 import com.example.englishapp.core.database.entity.VocabularyEntity;
 import com.example.englishapp.core.network.dictionary.DictionaryService;
 import com.example.englishapp.core.network.dictionary.dto.DictionaryWordDto;
 import com.example.englishapp.core.model.VocabularyLookup;
-
+import com.example.englishapp.feature.scan.domain.repository.ScanRepository;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import retrofit2.Response;
 
 @Singleton
-public class ScanRepositoryImpl {
+public class ScanRepositoryImpl implements ScanRepository {
 
     private final DictionaryService dictionaryService;
     private final VocabularyDao vocabularyDao;
@@ -31,7 +31,7 @@ public class ScanRepositoryImpl {
     }
 
     public void lookupWord(String word, MutableLiveData<ApiResult<VocabularyLookup>> resultLiveData) {
-        resultLiveData.setValue(ApiResult.Loading.getInstance());
+        resultLiveData.postValue((ApiResult) ApiResult.Loading.getInstance());
 
         executorProvider.getIoExecutor().execute(() -> {
             try {
@@ -87,6 +87,7 @@ public class ScanRepositoryImpl {
                             entity.getExampleSentence(),
                             entity.getImagePath(),
                             entity.getAudioPath(),
+                            entity.getNote(),
                             entity.getSourceType(),
                             existing.getMasteryLevel(),
                             existing.isMastered(),

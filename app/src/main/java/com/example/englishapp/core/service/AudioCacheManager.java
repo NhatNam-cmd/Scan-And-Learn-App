@@ -1,5 +1,5 @@
 package com.example.englishapp.core.service;
-
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import android.content.Context;
 import android.media.MediaPlayer;
 import com.example.englishapp.core.common.ExecutorProvider;
@@ -17,7 +17,7 @@ public class AudioCacheManager {
     private final ExecutorProvider executorProvider;
 
     @Inject
-    public AudioCacheManager(Context context, ExecutorProvider executorProvider) {
+    public AudioCacheManager(@ApplicationContext Context context, ExecutorProvider executorProvider) {
         this.cacheDir = context.getCacheDir();
         this.executorProvider = executorProvider;
     }

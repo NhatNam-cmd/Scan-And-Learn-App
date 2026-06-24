@@ -18,8 +18,8 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.englishapp.R;
 import com.example.englishapp.core.service.AudioCacheManager;
-import com.example.englishapp.data.local.entity.VocabularyEntity;
-import com.example.englishapp.domain.model.VocabularyLookup;
+import com.example.englishapp.core.database.entity.VocabularyEntity;
+import com.example.englishapp.core.model.VocabularyLookup;
 import com.google.android.material.button.MaterialButton;
 
 import java.io.File;
@@ -37,7 +37,7 @@ public class WordPreviewDialog extends DialogFragment {
     private TextView tvPhonetic;
     private EditText etMeaning;
     private ImageButton btnPlayAudio;
-    private MaterialButton btnSave, btnCancel, btnRefreshWord;
+    private ImageButton btnSave, btnCancel, btnRefreshWord;
 
     private String currentWord;
     private String currentMeaning;
@@ -144,6 +144,7 @@ public class WordPreviewDialog extends DialogFragment {
                     "",
                     "",
                     "",
+                    null,
                     "SCAN",
                     0,
                     false,
