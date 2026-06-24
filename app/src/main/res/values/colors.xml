@@ -19,6 +19,11 @@
     <color name="light_on_surface">#FF1F2937</color>
     <color name="light_error">#FFDC2626</color>
     <color name="light_on_error">#FFFFFFFF</color>
+    <!-- Result feedback colors -->
+    <color name="result_correct">#FF16A34A</color>
+    <color name="result_wrong">#FFDC2626</color>
+    <color name="result_correct_bg">#FFBBF7D0</color>
+    <color name="result_wrong_bg">#FFFECACA</color>
     
     <!-- Dark Theme Colors -->
     <color name="dark_primary">#FF818CF8</color>

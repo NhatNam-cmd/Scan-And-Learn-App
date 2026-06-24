@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shimmer skeleton screen – shown while AI story is generating -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/shimmer_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_background"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <!-- Header shimmer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_story_header"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <View
+            android:id="@+id/shimmer_title"
+            android:layout_width="200dp"
+            android:layout_height="22dp"
+            android:background="@drawable/bg_shimmer_block"
+            android:alpha="0.5" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_shimmer_block"
+            android:alpha="0.3" />
+    </LinearLayout>
+
+    <!-- Story panel shimmer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_panel_card"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <View
+            android:layout_width="80dp"
+            android:layout_height="14dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_shimmer_block" />
+
+        <!-- Line shimmer rows -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_shimmer_block" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_shimmer_block" />
+
+        <View
+            android:layout_width="260dp"
+            android:layout_height="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_shimmer_block" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_shimmer_block" />
+
+        <View
+            android:layout_width="200dp"
+            android:layout_height="16dp"
+            android:background="@drawable/bg_shimmer_block" />
+    </LinearLayout>
+
+    <!-- Answer chips shimmer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:background="@drawable/bg_panel_card"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <View
+            android:layout_width="90dp"
+            android:layout_height="14dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_shimmer_block" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="72dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_shimmer_block" />
+
+            <View
+                android:layout_width="80dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_shimmer_block" />
+
+            <View
+                android:layout_width="64dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_shimmer_block" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Word bank shimmer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_panel_card"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <View
+            android:layout_width="70dp"
+            android:layout_height="14dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_shimmer_block" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="88dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_shimmer_block" />
+
+            <View
+                android:layout_width="68dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_shimmer_block" />
+
+            <View
+                android:layout_width="96dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_shimmer_block" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- AI generating label -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="bottom|center_horizontal"
+        android:paddingBottom="32dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_shimmer_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="✨ AI đang dệt câu chuyện cho bạn..."
+            android:textColor="@color/light_primary"
+            android:textSize="14sp"
+            android:textStyle="italic" />
+    </LinearLayout>
+
+</LinearLayout>
