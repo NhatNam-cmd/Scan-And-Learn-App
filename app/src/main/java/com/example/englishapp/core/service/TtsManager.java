@@ -26,6 +26,10 @@ public class TtsManager {
 
     @Inject
     public TtsManager(@ApplicationContext Context context) {
+        this(context, null);
+    }
+
+    public TtsManager(Context context, OnReadyCallback readyCallback) {
         tts = new TextToSpeech(context.getApplicationContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
                 // Prefer English (story content is English vocabulary)
@@ -39,6 +43,9 @@ public class TtsManager {
                 isReady = true;
             } else {
                 isReady = false;
+            }
+            if (readyCallback != null) {
+                readyCallback.onReady(isReady);
             }
         });
 

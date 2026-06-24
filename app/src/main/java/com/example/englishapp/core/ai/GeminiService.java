@@ -103,6 +103,9 @@ public class GeminiService {
         if (data == null) {
             throw new IOException("Invalid story JSON");
         }
+        if (!usesTargetWords(data, words)) {
+            throw new IOException("Story blanks do not match selected vocabulary");
+        }
         attachVocabularyIds(data, words);
         return data;
     }
@@ -135,6 +138,21 @@ public class GeminiService {
                 data.getBlanks().get(i).setVocabularyId(words.get(i).getVocabularyId());
             }
         }
+    }
+
+    private boolean usesTargetWords(StoryGameData data, List<VocabularyEntity> words) {
+        if (data.getBlanks().size() != words.size()) {
+            return false;
+        }
+        for (int i = 0; i < words.size(); i++) {
+            String expected = words.get(i).getWord();
+            String actual = data.getBlanks().get(i).getWord();
+            if (expected == null || actual == null
+                    || !expected.trim().equalsIgnoreCase(actual.trim())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String extractText(JsonObject response) throws IOException {
