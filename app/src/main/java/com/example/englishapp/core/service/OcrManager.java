@@ -1,7 +1,7 @@
 package com.example.englishapp.core.service;
 
 import android.graphics.Bitmap;
-import com.example.englishapp.core.utils.ExecutorProvider;
+import com.example.englishapp.core.common.ExecutorProvider;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;

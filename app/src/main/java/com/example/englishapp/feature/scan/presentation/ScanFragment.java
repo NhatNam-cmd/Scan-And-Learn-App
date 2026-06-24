@@ -31,7 +31,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.englishapp.R;
 import com.example.englishapp.core.service.OcrManager;
 import com.example.englishapp.core.ui.ApiResult;
-import com.example.englishapp.data.local.entity.VocabularyEntity;
+import com.example.englishapp.core.database.entity.VocabularyEntity;
 import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -179,7 +179,7 @@ public class ScanFragment extends Fragment {
                 loadingOverlay.setVisibility(View.GONE);
                 captureButton.setEnabled(true);
 
-                WordPreviewDialog dialog = WordPreviewDialog.newInstance(((ApiResult.Success<com.example.englishapp.domain.model.VocabularyLookup>) result).getData());
+                WordPreviewDialog dialog = WordPreviewDialog.newInstance(((ApiResult.Success<com.example.englishapp.core.model.VocabularyLookup>) result).getData());
                 dialog.show(getChildFragmentManager(), "WordPreviewDialog");
                 viewModel.resetLookupState();
 

@@ -2,12 +2,12 @@ package com.example.englishapp.feature.scan.data.repository;
 
 import androidx.lifecycle.MutableLiveData;
 import com.example.englishapp.core.ui.ApiResult;
-import com.example.englishapp.core.utils.ExecutorProvider;
-import com.example.englishapp.data.local.dao.VocabularyDao;
-import com.example.englishapp.data.local.entity.VocabularyEntity;
-import com.example.englishapp.data.remote.api.DictionaryService;
-import com.example.englishapp.data.remote.dto.DictionaryWordDto;
-import com.example.englishapp.domain.model.VocabularyLookup;
+import com.example.englishapp.core.common.ExecutorProvider;
+import com.example.englishapp.core.database.dao.VocabularyDao;
+import com.example.englishapp.core.database.entity.VocabularyEntity;
+import com.example.englishapp.core.network.dictionary.DictionaryService;
+import com.example.englishapp.core.network.dictionary.dto.DictionaryWordDto;
+import com.example.englishapp.core.model.VocabularyLookup;
 
 import java.util.List;
 import javax.inject.Inject;

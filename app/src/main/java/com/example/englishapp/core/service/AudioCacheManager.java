@@ -2,7 +2,7 @@ package com.example.englishapp.core.service;
 
 import android.content.Context;
 import android.media.MediaPlayer;
-import com.example.englishapp.core.utils.ExecutorProvider;
+import com.example.englishapp.core.common.ExecutorProvider;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
