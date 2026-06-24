@@ -4,6 +4,23 @@ plugins {
     id 'androidx.room' version '2.6.1'
 }
 
+// Cấu hình Google Services từ nhánh 2
+if (file("google-services.json").exists()) {
+    apply plugin: "com.google.gms.google-services"
+} else {
+    logger.warn("Missing app/google-services.json. Firebase Google Sign-In will need this file before runtime testing.")
+}
+
+// Logic đọc API Key từ nhánh 2
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { stream ->
+        localProperties.load(stream)
+    }
+}
+def geminiApiKey = localProperties.getProperty("GEMINI_API_KEY", project.findProperty("GEMINI_API_KEY") ?: "")
+
 android {
     namespace 'com.example.englishapp'
     compileSdk 34
@@ -14,6 +31,9 @@ android {
         targetSdk 34
         versionCode 1
         versionName '1.0'
+
+        // Thêm trường BuildConfig cho Gemini API Key (từ nhánh 2)
+        buildConfigField "String", "GEMINI_API_KEY", "\"${geminiApiKey}\""
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
@@ -50,6 +70,7 @@ dependencies {
 
     // AppCompat & Material
     implementation libs.androidx.appcompat
+    implementation libs.appcompat // Của nhánh 2
     implementation libs.material
     implementation libs.androidx.constraintlayout
     implementation libs.androidx.fragment
@@ -84,28 +105,28 @@ dependencies {
     implementation libs.work.runtime
     implementation libs.hilt.work
 
-    // CameraX & ML Kit
+    // CameraX & ML Kit (Khai báo libs dùng chung)
     implementation libs.camerax.core
     implementation libs.camerax.camera2
     implementation libs.camerax.lifecycle
     implementation libs.camerax.view
     implementation libs.mlkit.text.recognition
 
-    // Gemini AI
-    implementation libs.gemini.generativeai
-
-    // Firebase (BOM)
-    implementation platform(libs.firebase.bom)
-    implementation libs.firebase.auth
-    implementation libs.firebase.firestore
+    // CameraX & ML Kit (Khai báo version tĩnh cứng từ nhánh 1)
     implementation("androidx.camera:camera-camera2:1.3.0")
     implementation("androidx.camera:camera-lifecycle:1.3.0")
     implementation("androidx.camera:camera-view:1.3.0")
-
-    // Google ML Kit - OCR
     implementation("com.google.mlkit:text-recognition:16.0.0")
 
-    // Guava ListenableFuture (via Guava Android)
+    // Gemini AI
+    implementation libs.gemini.generativeai
+
+    // Firebase (BOM) & Auth
+    implementation platform(libs.firebase.bom)
+    implementation libs.firebase.auth
+    implementation libs.firebase.firestore
+    implementation libs.play.services.auth // Của nhánh 2
+
+    // Guava ListenableFuture (via Guava Android) - Của nhánh 1
     implementation 'com.google.guava:guava:32.1.3-android'
 }
-

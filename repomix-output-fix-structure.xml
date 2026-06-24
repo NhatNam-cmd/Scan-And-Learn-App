@@ -130,21 +130,9 @@ app/src/main/java/com/example/englishapp/feature/quiz/QuizConfigFragment.java
 app/src/main/java/com/example/englishapp/feature/quiz/QuizResultFragment.java
 app/src/main/java/com/example/englishapp/feature/quiz/QuizSessionFragment.java
 app/src/main/java/com/example/englishapp/feature/quiz/usecase/.gitkeep
-app/src/main/java/com/example/englishapp/feature/scan/data/local/.gitkeep
-app/src/main/java/com/example/englishapp/feature/scan/data/repository/.gitkeep
 app/src/main/java/com/example/englishapp/feature/scan/data/repository/ScanRepositoryImpl.java
-app/src/main/java/com/example/englishapp/feature/scan/domain/model/.gitkeep
-app/src/main/java/com/example/englishapp/feature/scan/domain/repository/.gitkeep
-app/src/main/java/com/example/englishapp/feature/scan/domain/repository/ScanRepository.java
-app/src/main/java/com/example/englishapp/feature/scan/domain/usecase/.gitkeep
-app/src/main/java/com/example/englishapp/feature/scan/domain/usecase/GetWordDefinitionUseCase.java
-app/src/main/java/com/example/englishapp/feature/scan/domain/usecase/SaveWordUseCase.java
-app/src/main/java/com/example/englishapp/feature/scan/domain/usecase/ScanTextUseCase.java
 app/src/main/java/com/example/englishapp/feature/scan/presentation/ScanFragment.java
 app/src/main/java/com/example/englishapp/feature/scan/presentation/ScanViewModel.java
-app/src/main/java/com/example/englishapp/feature/scan/presentation/state/.gitkeep
-app/src/main/java/com/example/englishapp/feature/scan/presentation/state/ScanUiEvent.java
-app/src/main/java/com/example/englishapp/feature/scan/presentation/state/ScanUiState.java
 app/src/main/java/com/example/englishapp/feature/scan/presentation/WordPreviewDialog.java
 app/src/main/java/com/example/englishapp/feature/settings/SettingsFragment.java
 app/src/main/java/com/example/englishapp/feature/splash/SplashFragment.java
@@ -162,8 +150,6 @@ app/src/main/java/com/example/englishapp/feature/vocabulary/VocabularyDetailFrag
 app/src/main/java/com/example/englishapp/feature/vocabulary/VocabularyFragment.java
 app/src/main/java/com/example/englishapp/MainActivity.java
 app/src/main/java/com/example/englishapp/navigation/contract/NavigationDestination.java
-app/src/main/java/com/example/englishapp/navigation/Graph.java
-app/src/main/java/com/example/englishapp/navigation/Routes.java
 app/src/main/res/drawable/ic_launcher_background.xml
 app/src/main/res/drawable/ic_launcher_foreground.xml
 app/src/main/res/drawable/scan_frame_bg.xml
@@ -2590,360 +2576,6 @@ public class QuizSessionFragment extends Fragment {
 
 </file>
 
-<file path="app/src/main/java/com/example/englishapp/feature/scan/data/local/.gitkeep">
-
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/data/repository/.gitkeep">
-
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/data/repository/ScanRepositoryImpl.java">
-package com.example.englishapp.feature.scan.data.repository;
-
-import android.graphics.Bitmap;
-
-import com.example.englishapp.core.common.ApiResult;
-import com.example.englishapp.core.database.dao.VocabularyDao;
-import com.example.englishapp.core.database.entity.VocabularyEntity;
-import com.example.englishapp.core.mapper.DictionaryMapper;
-import com.example.englishapp.core.model.Vocabulary;
-import com.example.englishapp.core.network.dictionary.DictionaryService;
-import com.example.englishapp.core.network.dictionary.dto.DictionaryResponseDto;
-import com.example.englishapp.core.service.OcrManager;
-import com.example.englishapp.feature.scan.domain.repository.ScanRepository;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import retrofit2.Response;
-
-@Singleton
-public class ScanRepositoryImpl implements ScanRepository {
-
-    private final OcrManager ocrManager;
-    private final DictionaryService dictionaryService;
-    private final VocabularyDao vocabularyDao;
-
-    @Inject
-    public ScanRepositoryImpl(OcrManager ocrManager,
-                              DictionaryService dictionaryService,
-                              VocabularyDao vocabularyDao) {
-        this.ocrManager = ocrManager;
-        this.dictionaryService = dictionaryService;
-        this.vocabularyDao = vocabularyDao;
-    }
-
-    @Override
-    public CompletableFuture<ApiResult<String>> scanTextFromImage(Bitmap bitmap) {
-        CompletableFuture<ApiResult<String>> future = new CompletableFuture<>();
-
-        ocrManager.recognizeText(bitmap)
-                .thenAccept(result -> {
-                    if (result != null && !result.isEmpty()) {
-                        future.complete(ApiResult.success(result));
-                    } else {
-                        future.complete(ApiResult.error("No text found in image"));
-                    }
-                })
-                .exceptionally(throwable -> {
-                    future.complete(ApiResult.error("OCR failed: " + throwable.getMessage()));
-                    return null;
-                });
-
-        return future;
-    }
-
-    @Override
-    public CompletableFuture<ApiResult<Vocabulary>> getWordDefinition(String word) {
-        CompletableFuture<ApiResult<Vocabulary>> future = new CompletableFuture<>();
-
-        try {
-            Response<List<DictionaryResponseDto>> response =
-                    dictionaryService.lookupWord(word.trim()).execute();
-
-            if (response.isSuccessful() && response.body() != null) {
-                List<DictionaryResponseDto> dtos = response.body();
-                if (!dtos.isEmpty()) {
-                    Vocabulary vocabulary = DictionaryMapper.mapToVocabulary(dtos.get(0));
-                    if (vocabulary != null) {
-                        future.complete(ApiResult.success(vocabulary));
-                    } else {
-                        future.complete(ApiResult.error("Failed to parse word data"));
-                    }
-                } else {
-                    future.complete(ApiResult.error("Word '" + word + "' not found"));
-                }
-            } else {
-                future.complete(ApiResult.error("Network error: " + response.code()));
-            }
-        } catch (Exception e) {
-            future.complete(ApiResult.error("Error: " + e.getMessage()));
-        }
-
-        return future;
-    }
-
-    @Override
-    public CompletableFuture<ApiResult<Void>> saveVocabulary(Vocabulary vocabulary) {
-        CompletableFuture<ApiResult<Void>> future = new CompletableFuture<>();
-
-        try {
-            // Kiểm tra từ đã tồn tại
-            List<VocabularyEntity> existing = vocabularyDao.getAllVocabularies().getValue();
-            if (existing != null) {
-                for (VocabularyEntity entity : existing) {
-                    if (entity.getWord().equalsIgnoreCase(vocabulary.getWord())) {
-                        future.complete(ApiResult.error(
-                                "Word '" + vocabulary.getWord() + "' already exists"
-                        ));
-                        return future;
-                    }
-                }
-            }
-
-            VocabularyEntity entity = vocabulary.toEntity();
-            long id = vocabularyDao.insertVocabulary(entity);
-
-            if (id > 0) {
-                future.complete(ApiResult.success(null));
-            } else {
-                future.complete(ApiResult.error("Failed to save vocabulary"));
-            }
-        } catch (Exception e) {
-            future.complete(ApiResult.error("Save error: " + e.getMessage()));
-        }
-
-        return future;
-    }
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/domain/model/.gitkeep">
-
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/domain/repository/.gitkeep">
-
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/domain/repository/ScanRepository.java">
-package com.example.englishapp.feature.scan.domain.repository;
-
-import android.graphics.Bitmap;
-
-import com.example.englishapp.core.common.ApiResult;
-import com.example.englishapp.core.model.Vocabulary;
-
-import java.util.concurrent.CompletableFuture;
-
-public interface ScanRepository {
-    CompletableFuture<ApiResult<String>> scanTextFromImage(Bitmap bitmap);
-    CompletableFuture<ApiResult<Vocabulary>> getWordDefinition(String word);
-    CompletableFuture<ApiResult<Void>> saveVocabulary(Vocabulary vocabulary);
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/domain/usecase/.gitkeep">
-
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/domain/usecase/GetWordDefinitionUseCase.java">
-package com.example.englishapp.feature.scan.domain.usecase;
-
-import com.example.englishapp.core.common.ApiResult;
-import com.example.englishapp.core.model.Vocabulary;
-import com.example.englishapp.feature.scan.domain.repository.ScanRepository;
-
-import java.util.concurrent.CompletableFuture;
-
-import javax.inject.Inject;
-
-public class GetWordDefinitionUseCase {
-    private final ScanRepository repository;
-
-    @Inject
-    public GetWordDefinitionUseCase(ScanRepository repository) {
-        this.repository = repository;
-    }
-
-    public CompletableFuture<ApiResult<Vocabulary>> execute(String word) {
-        return repository.getWordDefinition(word);
-    }
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/domain/usecase/SaveWordUseCase.java">
-package com.example.englishapp.feature.scan.domain.usecase;
-
-import com.example.englishapp.core.common.ApiResult;
-import com.example.englishapp.core.model.Vocabulary;
-import com.example.englishapp.feature.scan.domain.repository.ScanRepository;
-
-import java.util.concurrent.CompletableFuture;
-
-import javax.inject.Inject;
-
-public class SaveWordUseCase {
-    private final ScanRepository repository;
-
-    @Inject
-    public SaveWordUseCase(ScanRepository repository) {
-        this.repository = repository;
-    }
-
-    public CompletableFuture<ApiResult<Void>> execute(Vocabulary vocabulary) {
-        return repository.saveVocabulary(vocabulary);
-    }
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/domain/usecase/ScanTextUseCase.java">
-package com.example.englishapp.feature.scan.domain.usecase;
-
-import android.graphics.Bitmap;
-
-import com.example.englishapp.core.common.ApiResult;
-import com.example.englishapp.feature.scan.domain.repository.ScanRepository;
-
-import java.util.concurrent.CompletableFuture;
-
-import javax.inject.Inject;
-
-public class ScanTextUseCase {
-    private final ScanRepository repository;
-
-    @Inject
-    public ScanTextUseCase(ScanRepository repository) {
-        this.repository = repository;
-    }
-
-    public CompletableFuture<ApiResult<String>> execute(Bitmap bitmap) {
-        return repository.scanTextFromImage(bitmap);
-    }
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/presentation/state/.gitkeep">
-
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/presentation/state/ScanUiEvent.java">
-package com.example.englishapp.feature.scan.presentation.state;
-
-import android.graphics.Bitmap;
-
-public abstract class ScanUiEvent {
-
-    public static final class ScanImage extends ScanUiEvent {
-        private final Bitmap bitmap;
-        public ScanImage(Bitmap bitmap) { this.bitmap = bitmap; }
-        public Bitmap getBitmap() { return bitmap; }
-    }
-
-    public static final class LookupWord extends ScanUiEvent {
-        private final String word;
-        public LookupWord(String word) { this.word = word; }
-        public String getWord() { return word; }
-    }
-
-    public static final class SaveWord extends ScanUiEvent {
-        public static final SaveWord INSTANCE = new SaveWord();
-        private SaveWord() {}
-    }
-
-    public static final class ClearResult extends ScanUiEvent {
-        public static final ClearResult INSTANCE = new ClearResult();
-        private ClearResult() {}
-    }
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/presentation/state/ScanUiState.java">
-package com.example.englishapp.feature.scan.presentation.state;
-
-import com.example.englishapp.core.model.Vocabulary;
-
-public abstract class ScanUiState {
-    private ScanUiState() {}
-
-    public static final class Idle extends ScanUiState {
-        public static final Idle INSTANCE = new Idle();
-        private Idle() {}
-    }
-
-    public static final class Loading extends ScanUiState {
-        public static final Loading INSTANCE = new Loading();
-        private Loading() {}
-    }
-
-    public static final class ScannedText extends ScanUiState {
-        private final String text;
-        public ScannedText(String text) { this.text = text; }
-        public String getText() { return text; }
-    }
-
-    public static final class WordFound extends ScanUiState {
-        private final Vocabulary vocabulary;
-        public WordFound(Vocabulary vocabulary) { this.vocabulary = vocabulary; }
-        public Vocabulary getVocabulary() { return vocabulary; }
-    }
-
-    public static final class WordSaved extends ScanUiState {
-        private final String word;
-        public WordSaved(String word) { this.word = word; }
-        public String getWord() { return word; }
-    }
-
-    public static final class Error extends ScanUiState {
-        private final String message;
-        public Error(String message) { this.message = message; }
-        public String getMessage() { return message; }
-    }
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/feature/scan/presentation/WordPreviewDialog.java">
-package com.example.englishapp.feature.scan.presentation;
-
-import android.app.Dialog;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.DialogFragment;
-
-import com.example.englishapp.R;
-
-public class WordPreviewDialog extends DialogFragment {
-
-    public static WordPreviewDialog newInstance() {
-        return new WordPreviewDialog();
-    }
-
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.dialog_word_preview, container, false);
-    }
-    
-    @Override
-    public void onStart() {
-        super.onStart();
-        Dialog dialog = getDialog();
-        if (dialog != null && dialog.getWindow() != null) {
-            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        }
-    }
-}
-</file>
-
 <file path="app/src/main/java/com/example/englishapp/feature/settings/SettingsFragment.java">
 package com.example.englishapp.feature.settings;
 
@@ -3188,40 +2820,6 @@ public class MainActivity extends AppCompatActivity {
 package com.example.englishapp.navigation.contract.NavigationDestination.java;
 
 public interface NavigationDestination {
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/navigation/Graph.java">
-package com.example.englishapp.navigation;
-
-public final class Graph {
-    private Graph() {}
-    public static final String ROOT = "root_graph";
-    public static final String AUTH = "auth_graph";
-    public static final String MAIN = "main_graph";
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/navigation/Routes.java">
-package com.example.englishapp.navigation;
-
-public final class Routes {
-    private Routes() {}
-    public static final String SPLASH = "splash";
-    public static final String LOGIN = "login";
-    public static final String DASHBOARD = "dashboard";
-    public static final String SCAN = "scan";
-    public static final String VOCABULARY = "vocabulary";
-    public static final String STORY_HOME = "story_home";
-    public static final String PROFILE = "profile";
-    public static final String STORY_SESSION = "story_session";
-    public static final String STORY_RESULT = "story_result";
-    public static final String QUIZ_CONFIG = "quiz_config";
-    public static final String QUIZ_SESSION = "quiz_session";
-    public static final String QUIZ_RESULT = "quiz_result";
-    public static final String VOCABULARY_DETAIL = "vocabulary_detail/{vocabularyId}";
-    public static final String SETTINGS = "settings";
-    public static final String LEADERBOARD = "leaderboard";
 }
 </file>
 
@@ -3504,76 +3102,6 @@ public final class Routes {
 </LinearLayout>
 </file>
 
-<file path="app/src/main/res/layout/dialog_word_preview.xml">
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:padding="24dp"
-    android:background="@android:color/white">
-
-    <TextView
-        android:id="@+id/tv_word"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="hello"
-        android:textColor="@android:color/black"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/btn_play_audio" />
-
-    <ImageButton
-        android:id="@+id/btn_play_audio"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@android:drawable/ic_media_play"
-        android:contentDescription="Play Audio"
-        app:layout_constraintTop_toTopOf="@id/tv_word"
-        app:layout_constraintBottom_toBottomOf="@id/tv_word"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/tv_phonetic"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="/həˈləʊ/"
-        android:textColor="#757575"
-        android:textSize="16sp"
-        android:layout_marginTop="4dp"
-        app:layout_constraintTop_toBottomOf="@id/tv_word"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <TextView
-        android:id="@+id/tv_definition"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="used as a greeting or to begin a telephone conversation."
-        android:textColor="@android:color/black"
-        android:textSize="16sp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tv_phonetic"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_add_to_vocabulary"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Add to Vocabulary"
-        android:layout_marginTop="24dp"
-        app:layout_constraintTop_toBottomOf="@id/tv_definition"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
-</file>
-
 <file path="app/src/main/res/layout/fragment_error.xml">
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
@@ -3687,173 +3215,6 @@ public final class Routes {
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
-</file>
-
-<file path="app/src/main/res/layout/fragment_scan.xml">
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@android:color/black"
-    tools:context=".feature.scan.presentation.ScanFragment">
-
-    <!-- Camera Preview -->
-    <androidx.camera.view.PreviewView
-        android:id="@+id/preview_view"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:scaleType="centerInside"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_panel"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Scan Frame Guide -->
-    <View
-        android:id="@+id/scan_frame"
-        android:layout_width="0dp"
-        android:layout_height="150dp"
-        android:layout_margin="32dp"
-        android:background="@drawable/scan_frame_bg"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Instruction Text -->
-    <TextView
-        android:id="@+id/tv_instruction"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Align text within the frame to scan"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:shadowColor="@android:color/black"
-        android:shadowDx="1"
-        android:shadowDy="1"
-        android:shadowRadius="2"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Bottom Panel -->
-    <LinearLayout
-        android:id="@+id/bottom_panel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:background="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <!-- Captured Image Preview -->
-        <ImageView
-            android:id="@+id/capturedImageView"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:visibility="gone"
-            android:contentDescription="Captured text"
-            android:scaleType="centerInside"
-            android:background="@android:drawable/editbox_background" />
-
-        <!-- Result Display -->
-        <TextView
-            android:id="@+id/resultTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:background="@android:drawable/editbox_background"
-            android:visibility="gone"
-            android:textSize="14sp"
-            android:textColor="@android:color/black" />
-
-        <!-- Word Display -->
-        <TextView
-            android:id="@+id/wordDisplayTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/phoneticTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:textSize="16sp"
-            android:textColor="@android:color/black"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/meaningTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:textSize="16sp"
-            android:textColor="@android:color/black"
-            android:visibility="gone" />
-
-        <!-- Progress Bar -->
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone" />
-
-        <!-- Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="8dp">
-
-            <Button
-                android:id="@+id/captureButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Capture"
-                android:layout_marginEnd="8dp" />
-
-            <Button
-                android:id="@+id/lookupButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Look Up"
-                android:visibility="gone"
-                android:layout_marginEnd="8dp" />
-
-            <Button
-                android:id="@+id/saveButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Save"
-                android:visibility="gone"
-                android:layout_marginEnd="8dp" />
-
-            <Button
-                android:id="@+id/clearButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Clear"
-                android:visibility="gone" />
-        </LinearLayout>
-
-    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 </file>
@@ -5455,339 +4816,6 @@ public class DictionaryResponseDto {
 }
 </file>
 
-<file path="app/src/main/java/com/example/englishapp/core/service/AudioCacheManager.java">
-package com.example.englishapp.core.service;
-
-import android.content.Context;
-import android.media.MediaPlayer;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-@Singleton
-public class AudioCacheManager {
-
-    private final File cacheDir;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
-    @Inject
-    public AudioCacheManager(Context context) {
-        this.cacheDir = context.getCacheDir();
-    }
-
-    /**
-     * Lấy file âm thanh từ cache hoặc download
-     */
-    public CompletableFuture<File> getAudioFile(String word, String audioUrl) {
-        CompletableFuture<File> future = new CompletableFuture<>();
-
-        executor.execute(() -> {
-            try {
-                String fileName = word.toLowerCase() + ".mp3";
-                File audioDir = new File(cacheDir, "audio");
-                if (!audioDir.exists()) {
-                    audioDir.mkdirs();
-                }
-
-                File cacheFile = new File(audioDir, fileName);
-
-                // Nếu file đã tồn tại trong cache
-                if (cacheFile.exists() && cacheFile.length() > 0) {
-                    future.complete(cacheFile);
-                    return;
-                }
-
-                // Download audio
-                boolean downloaded = downloadAudio(audioUrl, cacheFile);
-                if (downloaded && cacheFile.exists() && cacheFile.length() > 0) {
-                    future.complete(cacheFile);
-                } else {
-                    future.completeExceptionally(new Exception("Failed to download audio"));
-                }
-
-            } catch (Exception e) {
-                future.completeExceptionally(e);
-            }
-        });
-
-        return future;
-    }
-
-    private boolean downloadAudio(String audioUrl, File outputFile) {
-        try {
-            URL url = new URL(audioUrl);
-            java.net.HttpURLConnection connection =
-                    (java.net.HttpURLConnection) url.openConnection();
-            connection.connect();
-
-            InputStream inputStream = connection.getInputStream();
-            FileOutputStream outputStream = new FileOutputStream(outputFile);
-
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-
-            outputStream.flush();
-            outputStream.close();
-            inputStream.close();
-            connection.disconnect();
-
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public MediaPlayer playAudio(File file) {
-        try {
-            MediaPlayer mediaPlayer = new MediaPlayer();
-            mediaPlayer.setDataSource(file.getAbsolutePath());
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-            return mediaPlayer;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public void clearOldCache(int days) {
-        File audioDir = new File(cacheDir, "audio");
-        if (!audioDir.exists()) return;
-
-        long currentTime = System.currentTimeMillis();
-        long maxAge = days * 24 * 60 * 60 * 1000L;
-
-        File[] files = audioDir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (currentTime - file.lastModified() > maxAge) {
-                    file.delete();
-                }
-            }
-        }
-    }
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/core/service/OcrManager.java">
-package com.example.englishapp.core.service;
-
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.text.Text;
-import com.google.mlkit.vision.text.TextRecognition;
-import com.google.mlkit.vision.text.TextRecognizer;
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-@Singleton
-public class OcrManager {
-
-    private final TextRecognizer recognizer;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
-    @Inject
-    public OcrManager() {
-        this.recognizer = TextRecognition.getClient(
-                TextRecognizerOptions.DEFAULT_OPTIONS
-        );
-    }
-
-    /**
-     * Nhận diện văn bản từ bitmap
-     * Sử dụng CompletableFuture để hỗ trợ async
-     */
-    public CompletableFuture<String> recognizeText(Bitmap bitmap) {
-        CompletableFuture<String> future = new CompletableFuture<>();
-
-        executor.execute(() -> {
-            try {
-                // Downscale ảnh để tránh OOM
-                Bitmap scaledBitmap = downscaleBitmap(bitmap, 1024, 1024);
-                InputImage image = InputImage.fromBitmap(scaledBitmap, 0);
-
-                recognizer.process(image)
-                        .addOnSuccessListener(new OnSuccessListener<Text>() {
-                            @Override
-                            public void onSuccess(Text result) {
-                                StringBuilder fullText = new StringBuilder();
-                                for (Text.TextBlock block : result.getTextBlocks()) {
-                                    if (block.getText() != null) {
-                                        fullText.append(block.getText()).append(" ");
-                                    }
-                                }
-
-                                // Giải phóng memory
-                                if (scaledBitmap != bitmap && !scaledBitmap.isRecycled()) {
-                                    scaledBitmap.recycle();
-                                }
-                                if (!bitmap.isRecycled()) {
-                                    bitmap.recycle();
-                                }
-
-                                future.complete(fullText.toString().trim());
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(Exception e) {
-                                future.completeExceptionally(e);
-                            }
-                        });
-
-            } catch (Exception e) {
-                future.completeExceptionally(e);
-            }
-        });
-
-        return future;
-    }
-
-    /**
-     * Downscale ảnh để giảm kích thước, tránh OOM
-     */
-    private Bitmap downscaleBitmap(Bitmap bitmap, int maxWidth, int maxHeight) {
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-
-        if (width <= maxWidth && height <= maxHeight) {
-            return bitmap;
-        }
-
-        float ratio = Math.min((float) maxWidth / width, (float) maxHeight / height);
-        int newWidth = (int) (width * ratio);
-        int newHeight = (int) (height * ratio);
-
-        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
-    }
-
-    /**
-     * Chuyển byte array thành bitmap
-     */
-    public Bitmap byteArrayToBitmap(byte[] data) {
-        return BitmapFactory.decodeByteArray(data, 0, data.length);
-    }
-}
-</file>
-
-<file path="app/src/main/java/com/example/englishapp/core/service/TtsManager.java">
-package com.example.englishapp.core.service;
-
-import android.content.Context;
-import android.speech.tts.TextToSpeech;
-import android.speech.tts.UtteranceProgressListener;
-
-import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-@Singleton
-public class TtsManager {
-
-    private TextToSpeech tts;
-    private boolean isInitialized = false;
-    private final Context context;
-
-    @Inject
-    public TtsManager(Context context) {
-        this.context = context;
-        initializeTts();
-    }
-
-    private void initializeTts() {
-        tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                isInitialized = status == TextToSpeech.SUCCESS;
-                if (isInitialized) {
-                    tts.setLanguage(Locale.US);
-                    tts.setSpeechRate(1.0f);
-                    tts.setPitch(1.0f);
-                }
-            }
-        });
-    }
-
-    /**
-     * Phát âm thanh của từ
-     */
-    public CompletableFuture<Boolean> speakWord(String word, float speechRate) {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
-
-        if (!isInitialized || tts == null) {
-            future.completeExceptionally(new Exception("TTS not initialized"));
-            return future;
-        }
-
-        tts.setSpeechRate(speechRate);
-        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-            @Override
-            public void onStart(String utteranceId) {}
-
-            @Override
-            public void onDone(String utteranceId) {
-                future.complete(true);
-            }
-
-            @Override
-            public void onError(String utteranceId) {
-                future.completeExceptionally(new Exception("TTS error"));
-            }
-        });
-
-        int result = tts.speak(word, TextToSpeech.QUEUE_FLUSH, null, word);
-        if (result != TextToSpeech.SUCCESS) {
-            future.completeExceptionally(new Exception("Failed to start TTS"));
-        }
-
-        return future;
-    }
-
-    public CompletableFuture<Boolean> speakWord(String word) {
-        return speakWord(word, 1.0f);
-    }
-
-    public void stop() {
-        if (tts != null) {
-            tts.stop();
-        }
-    }
-
-    public void shutdown() {
-        if (tts != null) {
-            tts.stop();
-            tts.shutdown();
-            tts = null;
-            isInitialized = false;
-        }
-    }
-}
-</file>
-
 <file path="app/src/main/java/com/example/englishapp/di/DatabaseModule.java">
 package com.example.englishapp.di;
 
@@ -5850,427 +4878,479 @@ public class FirebaseModule {
 }
 </file>
 
-<file path="app/src/main/java/com/example/englishapp/feature/scan/presentation/ScanFragment.java">
+<file path="app/src/main/java/com/example/englishapp/feature/scan/data/repository/ScanRepositoryImpl.java">
+package com.example.englishapp.feature.scan.data.repository;
+
+import androidx.lifecycle.MutableLiveData;
+import com.example.englishapp.core.ui.ApiResult;
+import com.example.englishapp.core.utils.ExecutorProvider;
+import com.example.englishapp.data.local.dao.VocabularyDao;
+import com.example.englishapp.data.local.entity.VocabularyEntity;
+import com.example.englishapp.data.remote.api.DictionaryService;
+import com.example.englishapp.data.remote.dto.DictionaryWordDto;
+import com.example.englishapp.domain.model.VocabularyLookup;
+
+import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import retrofit2.Response;
+
+@Singleton
+public class ScanRepositoryImpl {
+
+    private final DictionaryService dictionaryService;
+    private final VocabularyDao vocabularyDao;
+    private final ExecutorProvider executorProvider;
+
+    @Inject
+    public ScanRepositoryImpl(DictionaryService dictionaryService,
+                              VocabularyDao vocabularyDao,
+                              ExecutorProvider executorProvider) {
+        this.dictionaryService = dictionaryService;
+        this.vocabularyDao = vocabularyDao;
+        this.executorProvider = executorProvider;
+    }
+
+    public void lookupWord(String word, MutableLiveData<ApiResult<VocabularyLookup>> resultLiveData) {
+        resultLiveData.setValue(ApiResult.Loading.getInstance());
+
+        executorProvider.getIoExecutor().execute(() -> {
+            try {
+                Response<List<DictionaryWordDto>> response = dictionaryService.getWordData(word.trim().toLowerCase()).execute();
+
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    DictionaryWordDto dto = response.body().get(0);
+
+                    String meaning = "Chưa có định nghĩa";
+                    if (!dto.getMeanings().isEmpty() && !dto.getMeanings().get(0).getDefinitions().isEmpty()) {
+                        meaning = dto.getMeanings().get(0).getDefinitions().get(0).getDefinition();
+                    }
+
+                    VocabularyLookup lookup = new VocabularyLookup(dto.getWord(), meaning, dto.getPhonetic());
+
+                    executorProvider.postToMainThread(() ->
+                            resultLiveData.setValue(ApiResult.Success.create(lookup))
+                    );
+                } else {
+                    executorProvider.postToMainThread(() ->
+                            resultLiveData.setValue(ApiResult.Error.create("Không tìm thấy từ vựng này trong hệ thống."))
+                    );
+                }
+            } catch (Exception e) {
+                executorProvider.postToMainThread(() ->
+                        resultLiveData.setValue(ApiResult.Error.create("Lỗi kết nối: " + e.getMessage()))
+                );
+            }
+        });
+    }
+
+    public void checkAndSaveVocabulary(VocabularyEntity entity, boolean forceUpdate, MutableLiveData<ApiResult<String>> saveStateLiveData) {
+        saveStateLiveData.setValue(ApiResult.Loading.getInstance());
+
+        executorProvider.getIoExecutor().execute(() -> {
+            try {
+                VocabularyEntity existing = vocabularyDao.findByWord(entity.getWord(), entity.getSourceType());
+
+                if (existing != null && !forceUpdate) {
+                    executorProvider.postToMainThread(() ->
+                            saveStateLiveData.setValue(ApiResult.Fallback.getInstance())
+                    );
+                    return;
+                }
+
+                if (existing != null) {
+                    VocabularyEntity updatedEntity = new VocabularyEntity(
+                            existing.getVocabularyId(),
+                            entity.getTopicId(),
+                            existing.getWord(),
+                            entity.getMeaning(),
+                            entity.getPhonetic(),
+                            entity.getExampleSentence(),
+                            entity.getImagePath(),
+                            entity.getAudioPath(),
+                            entity.getSourceType(),
+                            existing.getMasteryLevel(),
+                            existing.isMastered(),
+                            existing.getNextReviewDate(),
+                            existing.getCreatedAt(),
+                            System.currentTimeMillis()
+                    );
+                    vocabularyDao.update(updatedEntity);
+                } else {
+                    vocabularyDao.insert(entity);
+                }
+
+                executorProvider.postToMainThread(() ->
+                        saveStateLiveData.setValue(ApiResult.Success.create("Lưu từ vựng thành công!"))
+                );
+
+            } catch (Exception e) {
+                executorProvider.postToMainThread(() ->
+                        saveStateLiveData.setValue(ApiResult.Error.create("Lỗi lưu cơ sở dữ liệu: " + e.getMessage()))
+                );
+            }
+        });
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/englishapp/feature/scan/presentation/WordPreviewDialog.java">
 package com.example.englishapp.feature.scan.presentation;
 
-import android.Manifest;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
+import android.view.Window;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.camera.core.CameraSelector;
-import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.Preview;
-import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.view.PreviewView;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
+import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.englishapp.R;
-import com.example.englishapp.feature.scan.presentation.state.ScanUiEvent;
-import com.example.englishapp.feature.scan.presentation.state.ScanUiState;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.mlkit.vision.common.InputImage;
+import com.example.englishapp.core.service.AudioCacheManager;
+import com.example.englishapp.data.local.entity.VocabularyEntity;
+import com.example.englishapp.domain.model.VocabularyLookup;
+import com.google.android.material.button.MaterialButton;
 
-import java.io.ByteArrayOutputStream;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+import java.io.File;
+import javax.inject.Inject;
 import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
-public class ScanFragment extends Fragment {
+public class WordPreviewDialog extends DialogFragment {
 
-    private ScanViewModel viewModel;
+    private static final String ARG_WORD = "arg_word";
+    private static final String ARG_MEANING = "arg_meaning";
+    private static final String ARG_PHONETIC = "arg_phonetic";
 
-    // Views
-    private PreviewView previewView;
-    private ImageView capturedImageView;
-    private TextView resultTextView;
-    private TextView wordDisplayTextView;
-    private TextView meaningTextView;
-    private TextView phoneticTextView;
-    private ProgressBar progressBar;
-    private Button captureButton;
-    private Button lookupButton;
-    private Button saveButton;
-    private Button clearButton;
+    private EditText etWord;
+    private TextView tvPhonetic;
+    private EditText etMeaning;
+    private ImageButton btnPlayAudio;
+    private MaterialButton btnSave, btnCancel, btnRefreshWord;
 
-    private ImageCapture imageCapture;
-    private ExecutorService cameraExecutor;
-    private Bitmap capturedBitmap;
+    private String currentWord;
+    private String currentMeaning;
+    private String currentPhonetic;
+
+    @Inject
+    public AudioCacheManager audioCacheManager;
+
+    private ScanViewModel scanViewModel;
+
+    public static WordPreviewDialog newInstance(VocabularyLookup lookup) {
+        WordPreviewDialog fragment = new WordPreviewDialog();
+        Bundle args = new Bundle();
+        args.putString(ARG_WORD, lookup.getWord());
+        args.putString(ARG_MEANING, lookup.getMeaning());
+        args.putString(ARG_PHONETIC, lookup.getPhonetic());
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            currentWord = getArguments().getString(ARG_WORD, "");
+            currentMeaning = getArguments().getString(ARG_MEANING, "");
+            currentPhonetic = getArguments().getString(ARG_PHONETIC, "");
+        }
+    }
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_scan, container, false);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        if (getDialog() != null && getDialog().getWindow() != null) {
+            getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        }
+        return inflater.inflate(R.layout.dialog_word_preview, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        if (getParentFragment() != null) {
+            scanViewModel = new ViewModelProvider(getParentFragment()).get(ScanViewModel.class);
+        }
 
-        // Init ViewModel
-        viewModel = new ViewModelProvider(this).get(ScanViewModel.class);
+        etWord = view.findViewById(R.id.et_word);
+        tvPhonetic = view.findViewById(R.id.tv_phonetic);
+        etMeaning = view.findViewById(R.id.et_meaning);
+        btnPlayAudio = view.findViewById(R.id.btn_play_audio);
+        btnSave = view.findViewById(R.id.btn_save_vocab);
+        btnCancel = view.findViewById(R.id.btn_cancel_vocab);
+        btnRefreshWord = view.findViewById(R.id.btn_refresh_word);
 
-        // Init Views
-        initViews(view);
+        etWord.setText(currentWord);
+        tvPhonetic.setText(currentPhonetic == null || currentPhonetic.isEmpty() ? "/.../" : currentPhonetic);
+        etMeaning.setText(currentMeaning);
 
-        // Setup Camera
-        cameraExecutor = Executors.newSingleThreadExecutor();
-        startCamera();
-
-        // Setup Listeners
-        setupListeners();
-
-        // Observe State
-        observeState();
-    }
-
-    private void initViews(View view) {
-        // ⚠️ Đổi từ previewView -> preview_view (khớp với ID trong XML)
-        previewView = view.findViewById(R.id.preview_view);
-        capturedImageView = view.findViewById(R.id.capturedImageView);
-        resultTextView = view.findViewById(R.id.resultTextView);
-        wordDisplayTextView = view.findViewById(R.id.wordDisplayTextView);
-        meaningTextView = view.findViewById(R.id.meaningTextView);
-        phoneticTextView = view.findViewById(R.id.phoneticTextView);
-        progressBar = view.findViewById(R.id.progressBar);
-        captureButton = view.findViewById(R.id.captureButton);
-        lookupButton = view.findViewById(R.id.lookupButton);
-        saveButton = view.findViewById(R.id.saveButton);
-        clearButton = view.findViewById(R.id.clearButton);
-
-        // Mặc định ẩn các button
-        lookupButton.setVisibility(View.GONE);
-        saveButton.setVisibility(View.GONE);
-        clearButton.setVisibility(View.GONE);
-        capturedImageView.setVisibility(View.GONE);
-        resultTextView.setVisibility(View.GONE);
-        wordDisplayTextView.setVisibility(View.GONE);
-        meaningTextView.setVisibility(View.GONE);
-        phoneticTextView.setVisibility(View.GONE);
-    }
-
-    private void setupListeners() {
-        captureButton.setOnClickListener(v -> capturePhoto());
-
-        lookupButton.setOnClickListener(v -> {
-            String scannedText = resultTextView.getText().toString();
-            if (!scannedText.isEmpty()) {
-                viewModel.handleEvent(new ScanUiEvent.LookupWord(scannedText));
+        btnRefreshWord.setOnClickListener(v -> {
+            String correctedWord = etWord.getText().toString().trim();
+            if (!correctedWord.isEmpty() && scanViewModel != null) {
+                scanViewModel.lookupScannedWord(correctedWord);
+                dismiss();
+            } else {
+                Toast.makeText(getContext(), "Vui lòng nhập từ cần kiểm tra", Toast.LENGTH_SHORT).show();
             }
         });
 
-        saveButton.setOnClickListener(v -> {
-            viewModel.handleEvent(ScanUiEvent.SaveWord.INSTANCE);
-        });
+        btnPlayAudio.setOnClickListener(v -> {
+            String queryWord = etWord.getText().toString().trim();
+            if (!queryWord.isEmpty()) {
+                String audioUrl = "https://api.dictionaryapi.dev/media/pronunciations/en/" + queryWord.toLowerCase() + "-us.mp3";
 
-        clearButton.setOnClickListener(v -> {
-            viewModel.handleEvent(ScanUiEvent.ClearResult.INSTANCE);
-            resetUI();
-        });
-    }
-
-    private void observeState() {
-        viewModel.getState().observe(getViewLifecycleOwner(), this::updateUI);
-    }
-
-    private void updateUI(ScanUiState state) {
-        if (state instanceof ScanUiState.Loading) {
-            progressBar.setVisibility(View.VISIBLE);
-            captureButton.setEnabled(false);
-            return;
-        }
-
-        progressBar.setVisibility(View.GONE);
-        captureButton.setEnabled(true);
-
-        if (state instanceof ScanUiState.Idle) {
-            resetUI();
-        } else if (state instanceof ScanUiState.ScannedText) {
-            String text = ((ScanUiState.ScannedText) state).getText();
-            resultTextView.setVisibility(View.VISIBLE);
-            resultTextView.setText("Scanned: " + text);
-            lookupButton.setVisibility(View.VISIBLE);
-            clearButton.setVisibility(View.VISIBLE);
-            saveButton.setVisibility(View.GONE);
-            wordDisplayTextView.setVisibility(View.GONE);
-            meaningTextView.setVisibility(View.GONE);
-            phoneticTextView.setVisibility(View.GONE);
-        } else if (state instanceof ScanUiState.WordFound) {
-            com.example.englishapp.core.model.Vocabulary vocab =
-                    ((ScanUiState.WordFound) state).getVocabulary();
-
-            wordDisplayTextView.setVisibility(View.VISIBLE);
-            wordDisplayTextView.setText(vocab.getWord());
-
-            phoneticTextView.setVisibility(View.VISIBLE);
-            phoneticTextView.setText("Phonetic: " + vocab.getPhonetic());
-
-            meaningTextView.setVisibility(View.VISIBLE);
-            meaningTextView.setText("Meaning: " + vocab.getMeaning());
-
-            lookupButton.setVisibility(View.GONE);
-            saveButton.setVisibility(View.VISIBLE);
-            clearButton.setVisibility(View.VISIBLE);
-
-        } else if (state instanceof ScanUiState.WordSaved) {
-            String word = ((ScanUiState.WordSaved) state).getWord();
-            Toast.makeText(requireContext(), "Saved: " + word, Toast.LENGTH_SHORT).show();
-            resetUI();
-        } else if (state instanceof ScanUiState.Error) {
-            String message = ((ScanUiState.Error) state).getMessage();
-            Toast.makeText(requireContext(), "Error: " + message, Toast.LENGTH_LONG).show();
-            resetUI();
-        }
-    }
-
-    private void resetUI() {
-        capturedImageView.setVisibility(View.GONE);
-        resultTextView.setVisibility(View.GONE);
-        wordDisplayTextView.setVisibility(View.GONE);
-        meaningTextView.setVisibility(View.GONE);
-        phoneticTextView.setVisibility(View.GONE);
-        lookupButton.setVisibility(View.GONE);
-        saveButton.setVisibility(View.GONE);
-        clearButton.setVisibility(View.GONE);
-        capturedBitmap = null;
-    }
-
-    private void startCamera() {
-        ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
-                ProcessCameraProvider.getInstance(requireContext());
-
-        cameraProviderFuture.addListener(() -> {
-            try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-
-                Preview preview = new Preview.Builder().build();
-                preview.setSurfaceProvider(previewView.getSurfaceProvider());
-
-                imageCapture = new ImageCapture.Builder()
-                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                        .build();
-
-                CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-
-                cameraProvider.unbindAll();
-                cameraProvider.bindToLifecycle(
-                        getViewLifecycleOwner(),
-                        cameraSelector,
-                        preview,
-                        imageCapture
-                );
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(requireContext(), "Camera error: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
-            }
-        }, ContextCompat.getMainExecutor(requireContext()));
-    }
-
-    private void capturePhoto() {
-        if (imageCapture == null) return;
-
-        imageCapture.takePicture(ContextCompat.getMainExecutor(requireContext()),
-                new ImageCapture.OnImageCapturedCallback() {
-                    @Override
-                    public void onCaptureSuccess(@NonNull androidx.camera.core.ImageProxy image) {
-                        super.onCaptureSuccess(image);
-
-                        // Convert ImageProxy to Bitmap
-                        androidx.camera.core.ImageProxy imageProxy = image;
-                        Bitmap bitmap = imageProxyToBitmap(imageProxy);
-                        image.close();
-
-                        if (bitmap != null) {
-                            capturedBitmap = bitmap;
-                            capturedImageView.setVisibility(View.VISIBLE);
-                            capturedImageView.setImageBitmap(bitmap);
-
-                            // Process OCR
-                            viewModel.handleEvent(new ScanUiEvent.ScanImage(bitmap));
-                        } else {
-                            Toast.makeText(requireContext(), "Failed to capture image",
-                                    Toast.LENGTH_SHORT).show();
-                        }
+                audioCacheManager.getAudioFile(queryWord, audioUrl).thenAccept(file -> {
+                    if (file != null) {
+                        audioCacheManager.playAudio(file);
                     }
-
-                    @Override
-                    public void onError(@NonNull ImageCaptureException exception) {
-                        super.onError(exception);
-                        Toast.makeText(requireContext(), "Capture error: " + exception.getMessage(),
-                                Toast.LENGTH_SHORT).show();
-                    }
+                }).exceptionally(throwable -> {
+                    getActivity().runOnUiThread(() ->
+                            Toast.makeText(getContext(), "Không có file âm thanh cho từ này", Toast.LENGTH_SHORT).show()
+                    );
+                    return null;
                 });
-    }
+            }
+        });
 
-    private Bitmap imageProxyToBitmap(androidx.camera.core.ImageProxy image) {
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
+        btnSave.setOnClickListener(v -> {
+            String finalWord = etWord.getText().toString().trim();
+            String finalMeaning = etMeaning.getText().toString().trim();
 
-            // Lấy dữ liệu YUV từ ImageProxy
-            android.media.Image mediaImage = image.getImage();
-            if (mediaImage == null) return null;
+            if (finalWord.isEmpty() || finalMeaning.isEmpty()) {
+                Toast.makeText(getContext(), "Từ vựng và ý nghĩa không được để trống", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            // Chuyển đổi YUV sang JPEG
-            java.nio.ByteBuffer buffer = mediaImage.getPlanes()[0].getBuffer();
-            byte[] bytes = new byte[buffer.remaining()];
-            buffer.get(bytes);
+            long currentTime = System.currentTimeMillis();
+            VocabularyEntity newEntity = new VocabularyEntity(
+                    0L,
+                    null,
+                    finalWord,
+                    finalMeaning,
+                    currentPhonetic,
+                    "",
+                    "",
+                    "",
+                    "SCAN",
+                    0,
+                    false,
+                    currentTime,
+                    currentTime,
+                    currentTime
+            );
 
-            // Decode thành bitmap
-            return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            if (scanViewModel != null) {
+                scanViewModel.saveScannedVocabulary(newEntity, false);
+            }
+            dismiss();
+        });
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (cameraExecutor != null) {
-            cameraExecutor.shutdown();
-        }
+        btnCancel.setOnClickListener(v -> dismiss());
     }
 }
 </file>
 
-<file path="app/src/main/java/com/example/englishapp/feature/scan/presentation/ScanViewModel.java">
-package com.example.englishapp.feature.scan.presentation;
+<file path="app/src/main/res/layout/dialog_word_preview.xml">
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    android:background="@android:color/white"
+    android:padding="24dp">
 
-import android.graphics.Bitmap;
+    <EditText
+        android:id="@+id/et_word"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:backgroundTint="?colorPrimary"
+        android:hint="Từ vựng"
+        android:inputType="textNoSuggestions"
+        android:textColor="@android:color/black"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/btn_refresh_word"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+    <ImageButton
+        android:id="@+id/btn_refresh_word"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Tra lại từ"
+        android:src="@android:drawable/ic_popup_sync"
+        app:layout_constraintBottom_toBottomOf="@id/et_word"
+        app:layout_constraintEnd_toStartOf="@id/btn_play_audio"
+        app:layout_constraintTop_toTopOf="@id/et_word" />
 
-import com.example.englishapp.core.common.ApiResult;
-import com.example.englishapp.core.model.Vocabulary;
-import com.example.englishapp.feature.scan.domain.usecase.GetWordDefinitionUseCase;
-import com.example.englishapp.feature.scan.domain.usecase.SaveWordUseCase;
-import com.example.englishapp.feature.scan.domain.usecase.ScanTextUseCase;
-import com.example.englishapp.feature.scan.presentation.state.ScanUiEvent;
-import com.example.englishapp.feature.scan.presentation.state.ScanUiState;
+    <ImageButton
+        android:id="@+id/btn_play_audio"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Phát âm"
+        android:src="@android:drawable/ic_media_play"
+        app:layout_constraintBottom_toBottomOf="@id/et_word"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/et_word" />
 
-import javax.inject.Inject;
+    <TextView
+        android:id="@+id/tv_phonetic"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="/.../"
+        android:textColor="#757575"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_word" />
 
-import dagger.hilt.android.lifecycle.HiltViewModel;
+    <EditText
+        android:id="@+id/et_meaning"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="?colorPrimary"
+        android:gravity="top|start"
+        android:hint="Nhập nghĩa của từ..."
+        android:minLines="2"
+        android:textColor="@android:color/black"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_phonetic" />
 
-@HiltViewModel
-public class ScanViewModel extends ViewModel {
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_cancel_vocab"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="8dp"
+        android:text="Hủy"
+        app:layout_constraintEnd_toStartOf="@id/btn_save_vocab"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_meaning" />
 
-    private final ScanTextUseCase scanTextUseCase;
-    private final GetWordDefinitionUseCase getWordDefinitionUseCase;
-    private final SaveWordUseCase saveWordUseCase;
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_save_vocab"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Lưu từ vựng"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btn_cancel_vocab"
+        app:layout_constraintTop_toBottomOf="@id/et_meaning" />
 
-    private final MutableLiveData<ScanUiState> _state = new MutableLiveData<>(ScanUiState.Idle.INSTANCE);
-    public LiveData<ScanUiState> getState() { return _state; }
+</androidx.constraintlayout.widget.ConstraintLayout>
+</file>
 
-    private String lastScannedWord = null;
+<file path="app/src/main/res/layout/fragment_scan.xml">
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://tools.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    tools:context=".ui.scanner.ScanFragment">
 
-    @Inject
-    public ScanViewModel(ScanTextUseCase scanTextUseCase,
-                         GetWordDefinitionUseCase getWordDefinitionUseCase,
-                         SaveWordUseCase saveWordUseCase) {
-        this.scanTextUseCase = scanTextUseCase;
-        this.getWordDefinitionUseCase = getWordDefinitionUseCase;
-        this.saveWordUseCase = saveWordUseCase;
-    }
+    <androidx.camera.view.PreviewView
+        android:id="@+id/preview_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:scaleType="fillCenter"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    public void handleEvent(ScanUiEvent event) {
-        if (event instanceof ScanUiEvent.ScanImage) {
-            scanImage(((ScanUiEvent.ScanImage) event).getBitmap());
-        } else if (event instanceof ScanUiEvent.LookupWord) {
-            lookupWord(((ScanUiEvent.LookupWord) event).getWord());
-        } else if (event instanceof ScanUiEvent.SaveWord) {
-            saveWord();
-        } else if (event instanceof ScanUiEvent.ClearResult) {
-            clearResult();
-        }
-    }
+    <View
+        android:id="@+id/scan_frame"
+        android:layout_width="0dp"
+        android:layout_height="150dp"
+        android:layout_marginHorizontal="32dp"
+        android:background="@drawable/scan_frame_bg"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    private void scanImage(Bitmap bitmap) {
-        _state.setValue(ScanUiState.Loading.INSTANCE);
+    <TextView
+        android:id="@+id/tv_instruction"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Align text within the frame to scan"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:shadowColor="@android:color/black"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
+        app:layout_constraintBottom_toTopOf="@id/scan_frame"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        scanTextUseCase.execute(bitmap)
-                .thenAccept(result -> {
-                    if (result instanceof ApiResult.Success) {
-                        String text = ((ApiResult.Success<String>) result).getData();
-                        lastScannedWord = text;
-                        _state.postValue(new ScanUiState.ScannedText(text));
-                    } else if (result instanceof ApiResult.Error) {
-                        String message = ((ApiResult.Error) result).getMessage();
-                        _state.postValue(new ScanUiState.Error(message));
-                    }
-                })
-                .exceptionally(throwable -> {
-                    _state.postValue(new ScanUiState.Error("Scan failed: " + throwable.getMessage()));
-                    return null;
-                });
-    }
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/control_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp"
+        android:background="#80000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-    private void lookupWord(String word) {
-        _state.setValue(ScanUiState.Loading.INSTANCE);
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/captureButton"
+            style="@style/Widget.EnglishApp.Button.Primary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Capture Text"
+            app:icon="@android:drawable/ic_menu_camera"
+            app:backgroundTint="?colorPrimary"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        getWordDefinitionUseCase.execute(word)
-                .thenAccept(result -> {
-                    if (result instanceof ApiResult.Success) {
-                        Vocabulary vocabulary = ((ApiResult.Success<Vocabulary>) result).getData();
-                        _state.postValue(new ScanUiState.WordFound(vocabulary));
-                    } else if (result instanceof ApiResult.Error) {
-                        String message = ((ApiResult.Error) result).getMessage();
-                        _state.postValue(new ScanUiState.Error(message));
-                    }
-                })
-                .exceptionally(throwable -> {
-                    _state.postValue(new ScanUiState.Error("Lookup failed: " + throwable.getMessage()));
-                    return null;
-                });
-    }
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    private void saveWord() {
-        ScanUiState currentState = _state.getValue();
-        if (currentState instanceof ScanUiState.WordFound) {
-            Vocabulary vocabulary = ((ScanUiState.WordFound) currentState).getVocabulary();
+    <FrameLayout
+        android:id="@+id/loading_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#40000000"
+        android:visibility="gone"
+        tools:visibility="visible">
 
-            saveWordUseCase.execute(vocabulary)
-                    .thenAccept(result -> {
-                        if (result instanceof ApiResult.Success) {
-                            _state.postValue(new ScanUiState.WordSaved(vocabulary.getWord()));
-                        } else if (result instanceof ApiResult.Error) {
-                            String message = ((ApiResult.Error) result).getMessage();
-                            _state.postValue(new ScanUiState.Error(message));
-                        }
-                    })
-                    .exceptionally(throwable -> {
-                        _state.postValue(new ScanUiState.Error("Save failed: " + throwable.getMessage()));
-                        return null;
-                    });
-        }
-    }
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="?colorPrimary" />
+    </FrameLayout>
 
-    private void clearResult() {
-        lastScannedWord = null;
-        _state.setValue(ScanUiState.Idle.INSTANCE);
-    }
-}
+</androidx.constraintlayout.widget.ConstraintLayout>
 </file>
 
 <file path="app/src/main/res/values/colors.xml">
@@ -6389,6 +5469,547 @@ org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
 kotlin.code.style=official
 android.useAndroidX=true
 android.enableJetifier=true
+</file>
+
+<file path="app/src/main/java/com/example/englishapp/core/service/AudioCacheManager.java">
+package com.example.englishapp.core.service;
+
+import android.content.Context;
+import android.media.MediaPlayer;
+import com.example.englishapp.core.utils.ExecutorProvider;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.concurrent.CompletableFuture;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+@Singleton
+public class AudioCacheManager {
+    private final File cacheDir;
+    private final ExecutorProvider executorProvider;
+
+    @Inject
+    public AudioCacheManager(Context context, ExecutorProvider executorProvider) {
+        this.cacheDir = context.getCacheDir();
+        this.executorProvider = executorProvider;
+    }
+
+    public CompletableFuture<File> getAudioFile(String word, String audioUrl) {
+        CompletableFuture<File> future = new CompletableFuture<>();
+
+        executorProvider.getIoExecutor().execute(() -> {
+            try {
+                String extension = audioUrl.substring(audioUrl.lastIndexOf("."));
+                if (!extension.matches("\\.[a-zA-Z0-9]+")) {
+                    extension = ".mp3";
+                }
+
+                String fileName = word.toLowerCase() + extension;
+                File audioDir = new File(cacheDir, "audio");
+                if (!audioDir.exists()) {
+                    audioDir.mkdirs();
+                }
+
+                File cacheFile = new File(audioDir, fileName);
+
+                if (cacheFile.exists() && cacheFile.length() > 0) {
+                    future.complete(cacheFile);
+                    return;
+                }
+
+                if (downloadAudio(audioUrl, cacheFile)) {
+                    future.complete(cacheFile);
+                } else {
+                    future.completeExceptionally(new Exception("Download failed"));
+                }
+            } catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+        });
+        return future;
+    }
+
+    private boolean downloadAudio(String urlString, File destination) {
+        try (InputStream in = new URL(urlString).openStream();
+             FileOutputStream out = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public void playAudio(File file) {
+        executorProvider.postToMainThread(() -> {
+            try {
+                MediaPlayer mediaPlayer = new MediaPlayer();
+                mediaPlayer.setDataSource(file.getAbsolutePath());
+                mediaPlayer.prepareAsync();
+
+                mediaPlayer.setOnPreparedListener(MediaPlayer::start);
+
+                mediaPlayer.setOnCompletionListener(MediaPlayer::release);
+
+                mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                    mp.release();
+                    return true;
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/englishapp/core/service/OcrManager.java">
+package com.example.englishapp.core.service;
+
+import android.graphics.Bitmap;
+import com.example.englishapp.core.utils.ExecutorProvider;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+@Singleton
+public class OcrManager {
+
+    private final TextRecognizer recognizer;
+    private final ExecutorProvider executorProvider;
+
+    public interface OcrCallback {
+        void onSuccess(String text);
+        void onError(Exception e);
+    }
+
+    @Inject
+    public OcrManager(ExecutorProvider executorProvider) {
+        this.executorProvider = executorProvider;
+        this.recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+    }
+
+    public void recognizeText(Bitmap bitmap, OcrCallback callback) {
+        executorProvider.getIoExecutor().execute(() -> {
+            try {
+                Bitmap resizedBitmap = downscaleBitmap(bitmap, 1024);
+                InputImage image = InputImage.fromBitmap(resizedBitmap, 0);
+
+                recognizer.process(image)
+                        .addOnSuccessListener(executorProvider.getMainExecutor(), visionText -> {
+                            callback.onSuccess(visionText.getText());
+                        })
+                        .addOnFailureListener(executorProvider.getMainExecutor(), callback::onError);
+            } catch (Exception e) {
+                executorProvider.postToMainThread(() -> callback.onError(e));
+            }
+        });
+    }
+
+    private Bitmap downscaleBitmap(Bitmap original, int maxDimension) {
+        int width = original.getWidth();
+        int height = original.getHeight();
+
+        if (width <= maxDimension && height <= maxDimension) {
+            return original;
+        }
+
+        float ratio = (float) width / height;
+        int newWidth;
+        int newHeight;
+
+        if (ratio > 1) {
+            newWidth = maxDimension;
+            newHeight = (int) (maxDimension / ratio);
+        } else {
+            newHeight = maxDimension;
+            newWidth = (int) (maxDimension * ratio);
+        }
+
+        return Bitmap.createScaledBitmap(original, newWidth, newHeight, true);
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/englishapp/core/service/TtsManager.java">
+package com.example.englishapp.core.service;
+
+import android.content.Context;
+import android.speech.tts.TextToSpeech;
+import java.util.LinkedList;
+import java.util.Locale;
+import java.util.Queue;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+@Singleton
+public class TtsManager implements TextToSpeech.OnInitListener {
+
+    private TextToSpeech tts;
+    private boolean isInitialized = false;
+    private final Queue<String> pendingWords = new LinkedList<>();
+
+    @Inject
+    public TtsManager(Context context) {
+        tts = new TextToSpeech(context, this);
+    }
+
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            int result = tts.setLanguage(Locale.US);
+            if (result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED) {
+                isInitialized = true;
+                flushQueue();
+            }
+        }
+    }
+
+    public void speakWord(String word) {
+        if (word == null || word.trim().isEmpty()) {
+            return;
+        }
+        if (isInitialized) {
+            tts.speak(word, TextToSpeech.QUEUE_FLUSH, null, null);
+        } else {
+            pendingWords.add(word);
+        }
+    }
+
+    private void flushQueue() {
+        while (!pendingWords.isEmpty()) {
+            String word = pendingWords.poll();
+            if (word != null) {
+                tts.speak(word, TextToSpeech.QUEUE_ADD, null, null);
+            }
+        }
+    }
+
+    public void shutdown() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/englishapp/feature/scan/presentation/ScanFragment.java">
+package com.example.englishapp.feature.scan.presentation;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.ImageProxy;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+
+import com.example.englishapp.R;
+import com.example.englishapp.core.service.OcrManager;
+import com.example.englishapp.core.ui.ApiResult;
+import com.example.englishapp.data.local.entity.VocabularyEntity;
+import com.google.android.material.button.MaterialButton;
+import com.google.common.util.concurrent.ListenableFuture;
+
+import java.nio.ByteBuffer;
+import java.util.concurrent.ExecutionException;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+
+@AndroidEntryPoint
+public class ScanFragment extends Fragment {
+
+    private ScanViewModel viewModel;
+    private PreviewView previewView;
+    private MaterialButton captureButton;
+    private ProgressBar progressBar;
+    private View loadingOverlay;
+    private ImageCapture imageCapture;
+
+    private VocabularyEntity pendingVocabulary;
+
+    @Inject
+    public OcrManager ocrManager;
+
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    startCamera();
+                } else {
+                    Toast.makeText(requireContext(), "Cần cấp quyền Camera để sử dụng tính năng này", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_scan, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        viewModel = new ViewModelProvider(this).get(ScanViewModel.class);
+
+        previewView = view.findViewById(R.id.preview_view);
+        captureButton = view.findViewById(R.id.captureButton);
+        progressBar = view.findViewById(R.id.progressBar);
+        loadingOverlay = view.findViewById(R.id.loading_overlay);
+
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            startCamera();
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA);
+        }
+
+        captureButton.setOnClickListener(v -> takePhoto());
+
+        setupObservers();
+    }
+
+    private void startCamera() {
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
+
+        cameraProviderFuture.addListener(() -> {
+            try {
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                Preview preview = new Preview.Builder().build();
+                preview.setSurfaceProvider(previewView.getSurfaceProvider());
+
+                imageCapture = new ImageCapture.Builder().build();
+                CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+
+                cameraProvider.unbindAll();
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
+
+            } catch (ExecutionException | InterruptedException e) {
+                Toast.makeText(requireContext(), "Lỗi khởi tạo Camera", Toast.LENGTH_SHORT).show();
+            }
+        }, ContextCompat.getMainExecutor(requireContext()));
+    }
+
+    private void takePhoto() {
+        if (imageCapture == null) return;
+
+        loadingOverlay.setVisibility(View.VISIBLE);
+        captureButton.setEnabled(false);
+
+        imageCapture.takePicture(ContextCompat.getMainExecutor(requireContext()), new ImageCapture.OnImageCapturedCallback() {
+            @Override
+            public void onCaptureSuccess(@NonNull ImageProxy image) {
+                Bitmap bitmap = imageProxyToBitmap(image);
+                image.close();
+                processImageWithOcr(bitmap);
+            }
+
+            @Override
+            public void onError(@NonNull ImageCaptureException exception) {
+                loadingOverlay.setVisibility(View.GONE);
+                captureButton.setEnabled(true);
+                Toast.makeText(requireContext(), "Lỗi chụp ảnh: " + exception.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private Bitmap imageProxyToBitmap(ImageProxy image) {
+        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes);
+        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
+        Matrix matrix = new Matrix();
+        matrix.postRotate(image.getImageInfo().getRotationDegrees());
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.Height(), matrix, true);
+    }
+
+    private void processImageWithOcr(Bitmap bitmap) {
+        ocrManager.recognizeText(bitmap, new OcrManager.OcrCallback() {
+            @Override
+            public void onSuccess(String text) {
+                if (text != null && !text.trim().isEmpty()) {
+                    viewModel.lookupScannedWord(text.trim());
+                } else {
+                    loadingOverlay.setVisibility(View.GONE);
+                    captureButton.setEnabled(true);
+                    Toast.makeText(requireContext(), "Không tìm thấy văn bản trong ảnh", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                loadingOverlay.setVisibility(View.GONE);
+                captureButton.setEnabled(true);
+                Toast.makeText(requireContext(), "Lỗi nhận diện văn bản", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void setupObservers() {
+        viewModel.lookupResult.observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof ApiResult.Loading) {
+                loadingOverlay.setVisibility(View.VISIBLE);
+                captureButton.setEnabled(false);
+            } else if (result instanceof ApiResult.Success) {
+                loadingOverlay.setVisibility(View.GONE);
+                captureButton.setEnabled(true);
+
+                WordPreviewDialog dialog = WordPreviewDialog.newInstance(((ApiResult.Success<com.example.englishapp.domain.model.VocabularyLookup>) result).getData());
+                dialog.show(getChildFragmentManager(), "WordPreviewDialog");
+                viewModel.resetLookupState();
+
+            } else if (result instanceof ApiResult.Error) {
+                loadingOverlay.setVisibility(View.GONE);
+                captureButton.setEnabled(true);
+                Toast.makeText(requireContext(), ((ApiResult.Error) result).getMessage(), Toast.LENGTH_LONG).show();
+                viewModel.resetLookupState();
+            }
+        });
+
+        viewModel.saveResult.observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof ApiResult.Loading) {
+                loadingOverlay.setVisibility(View.VISIBLE);
+            } else if (result instanceof ApiResult.Success) {
+                loadingOverlay.setVisibility(View.GONE);
+                Toast.makeText(requireContext(), ((ApiResult.Success<String>) result).getData(), Toast.LENGTH_SHORT).show();
+                viewModel.resetSaveState();
+                pendingVocabulary = null;
+            } else if (result instanceof ApiResult.Fallback) {
+                loadingOverlay.setVisibility(View.GONE);
+                showDuplicateChoiceDialog();
+                viewModel.resetSaveState();
+            } else if (result instanceof ApiResult.Error) {
+                loadingOverlay.setVisibility(View.GONE);
+                Toast.makeText(requireContext(), ((ApiResult.Error) result).getMessage(), Toast.LENGTH_SHORT).show();
+                viewModel.resetSaveState();
+            }
+        });
+    }
+
+    public void setPendingVocabulary(VocabularyEntity entity) {
+        this.pendingVocabulary = entity;
+    }
+
+    private void showDuplicateChoiceDialog() {
+        if (pendingVocabulary == null) return;
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Từ vựng đã tồn tại")
+                .setMessage("Từ vựng này đã có trong hệ thống. Bạn muốn cập nhật ngữ cảnh cho từ cũ hay lưu thành một từ mới hoàn toàn?")
+                .setPositiveButton("Cập nhật", (dialog, which) -> {
+                    viewModel.saveScannedVocabulary(pendingVocabulary, true);
+                })
+                .setNegativeButton("Lưu từ mới", (dialog, which) -> {
+                    pendingVocabulary = new VocabularyEntity(
+                            0L,
+                            pendingVocabulary.getTopicId(),
+                            pendingVocabulary.getWord(),
+                            pendingVocabulary.getMeaning(),
+                            pendingVocabulary.getPhonetic(),
+                            pendingVocabulary.getExampleSentence(),
+                            pendingVocabulary.getImagePath(),
+                            pendingVocabulary.getAudioPath(),
+                            pendingVocabulary.getSourceType(),
+                            0,
+                            false,
+                            System.currentTimeMillis(),
+                            System.currentTimeMillis(),
+                            System.currentTimeMillis()
+                    );
+                    viewModel.saveScannedVocabulary(pendingVocabulary, false);
+                })
+                .setNeutralButton("Hủy", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false)
+                .show();
+    }
+}
+</file>
+
+<file path="app/src/main/java/com/example/englishapp/feature/scan/presentation/ScanViewModel.java">
+package com.example.englishapp.feature.scan.presentation;
+
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
+
+import com.example.englishapp.core.ui.ApiResult;
+import com.example.englishapp.data.local.entity.VocabularyEntity;
+import com.example.englishapp.domain.model.VocabularyLookup;
+import com.example.englishapp.feature.scan.data.repository.ScanRepositoryImpl;
+
+import javax.inject.Inject;
+import dagger.hilt.android.lifecycle.HiltViewModel;
+
+@HiltViewModel
+public class ScanViewModel extends ViewModel {
+
+    private final ScanRepositoryImpl repository;
+
+    private final MutableLiveData<ApiResult<VocabularyLookup>> _lookupResult = new MutableLiveData<>();
+    public LiveData<ApiResult<VocabularyLookup>> lookupResult = _lookupResult;
+
+    private final MutableLiveData<ApiResult<String>> _saveResult = new MutableLiveData<>();
+    public LiveData<ApiResult<String>> saveResult = _saveResult;
+
+    @Inject
+    public ScanViewModel(ScanRepositoryImpl repository) {
+        this.repository = repository;
+    }
+
+    public void lookupScannedWord(String word) {
+        if (word == null || word.trim().isEmpty()) {
+            _lookupResult.setValue(ApiResult.Error.create("Từ vựng không được để trống"));
+            return;
+        }
+        repository.lookupWord(word, _lookupResult);
+    }
+
+    public void saveScannedVocabulary(VocabularyEntity entity, boolean forceUpdate) {
+        if (entity == null) {
+            _saveResult.setValue(ApiResult.Error.create("Dữ liệu không hợp lệ"));
+            return;
+        }
+        repository.checkAndSaveVocabulary(entity, forceUpdate, _saveResult);
+    }
+
+    public void resetSaveState() {
+        _saveResult.setValue(null);
+    }
+
+    public void resetLookupState() {
+        _lookupResult.setValue(null);
+    }
+}
 </file>
 
 <file path="gradle/libs.versions.toml">

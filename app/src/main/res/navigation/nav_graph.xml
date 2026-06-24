@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/nav_dashboard">
+    app:startDestination="@id/nav_splash">
 
     <!-- Bottom Nav Tabs -->
     <fragment
@@ -26,9 +26,9 @@
 
     <fragment
         android:id="@+id/nav_story"
-        android:name="com.example.englishapp.feature.story.presentation.StoryFragment"
+        android:name="com.example.englishapp.feature.story.presentation.StoryHomeFragment"
         android:label="Story"
-        tools:layout="@layout/fragment_placeholder" />
+        tools:layout="@layout/fragment_story_home" />
 
     <fragment
         android:id="@+id/nav_profile"
@@ -70,6 +70,21 @@
         android:id="@+id/nav_quiz_result"
         android:name="com.example.englishapp.feature.quiz.QuizResultFragment"
         android:label="Quiz Result" />
+
+    <fragment
+        android:id="@+id/nav_story_word_selection"
+        android:name="com.example.englishapp.feature.story.presentation.StoryWordSelectionFragment"
+        android:label="Story Word Selection" />
+
+    <fragment
+        android:id="@+id/nav_story_session"
+        android:name="com.example.englishapp.feature.story.presentation.StorySessionFragment"
+        android:label="Story Session" />
+
+    <fragment
+        android:id="@+id/nav_story_result"
+        android:name="com.example.englishapp.feature.story.presentation.StoryResultFragment"
+        android:label="Story Result" />
 
     <fragment
         android:id="@+id/nav_settings"

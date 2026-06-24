@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/light_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <ImageView
+            android:id="@+id/img_story"
+            android:layout_width="112dp"
+            android:layout_height="112dp"
+            android:layout_marginTop="48dp"
+            android:contentDescription="Story"
+            android:src="@android:drawable/ic_menu_edit"
+            android:tint="@color/light_primary" />
+
+        <TextView
+            android:id="@+id/tv_story_intro_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:text="Story Practice"
+            android:textColor="@color/light_on_background"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_story_intro"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:lineSpacingExtra="4dp"
+            android:text="Chọn 5-10 từ chưa thuộc, ứng dụng sẽ tạo một câu chuyện ngắn. Nhiệm vụ của bạn là chạm vào từ đúng để điền vào từng ô trống."
+            android:textColor="@color/light_on_background"
+            android:textSize="16sp" />
+
+        <LinearLayout
+            android:id="@+id/layout_story_badges"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_story_badge"
+                android:gravity="center"
+                android:text="5-10 từ"
+                android:textColor="@color/light_on_secondary_container"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_story_badge"
+                android:gravity="center"
+                android:text="Có Offline"
+                android:textColor="@color/light_on_secondary_container"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_story_badge"
+                android:gravity="center"
+                android:text="+EXP"
+                android:textColor="@color/light_on_secondary_container"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_create_story"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/bg_story_button_primary"
+            android:stateListAnimator="@null"
+            android:text="Tạo cốt truyện mới"
+            android:textAllCaps="false"
+            android:textColor="@color/light_on_primary"
+            android:textSize="16sp" />
+    </LinearLayout>
+</ScrollView>
