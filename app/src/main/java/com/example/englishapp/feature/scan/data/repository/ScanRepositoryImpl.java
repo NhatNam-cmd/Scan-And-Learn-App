@@ -1,121 +1,113 @@
 package com.example.englishapp.feature.scan.data.repository;
 
-import android.graphics.Bitmap;
-
-import com.example.englishapp.core.common.ApiResult;
-import com.example.englishapp.core.database.dao.VocabularyDao;
-import com.example.englishapp.core.database.entity.VocabularyEntity;
-import com.example.englishapp.core.mapper.DictionaryMapper;
-import com.example.englishapp.core.model.Vocabulary;
-import com.example.englishapp.core.network.dictionary.DictionaryService;
-import com.example.englishapp.core.network.dictionary.dto.DictionaryResponseDto;
-import com.example.englishapp.core.service.OcrManager;
-import com.example.englishapp.feature.scan.domain.repository.ScanRepository;
+import androidx.lifecycle.MutableLiveData;
+import com.example.englishapp.core.ui.ApiResult;
+import com.example.englishapp.core.utils.ExecutorProvider;
+import com.example.englishapp.data.local.dao.VocabularyDao;
+import com.example.englishapp.data.local.entity.VocabularyEntity;
+import com.example.englishapp.data.remote.api.DictionaryService;
+import com.example.englishapp.data.remote.dto.DictionaryWordDto;
+import com.example.englishapp.domain.model.VocabularyLookup;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
 import retrofit2.Response;
 
 @Singleton
-public class ScanRepositoryImpl implements ScanRepository {
+public class ScanRepositoryImpl {
 
-    private final OcrManager ocrManager;
     private final DictionaryService dictionaryService;
     private final VocabularyDao vocabularyDao;
+    private final ExecutorProvider executorProvider;
 
     @Inject
-    public ScanRepositoryImpl(OcrManager ocrManager,
-                              DictionaryService dictionaryService,
-                              VocabularyDao vocabularyDao) {
-        this.ocrManager = ocrManager;
+    public ScanRepositoryImpl(DictionaryService dictionaryService,
+                              VocabularyDao vocabularyDao,
+                              ExecutorProvider executorProvider) {
         this.dictionaryService = dictionaryService;
         this.vocabularyDao = vocabularyDao;
+        this.executorProvider = executorProvider;
     }
 
-    @Override
-    public CompletableFuture<ApiResult<String>> scanTextFromImage(Bitmap bitmap) {
-        CompletableFuture<ApiResult<String>> future = new CompletableFuture<>();
+    public void lookupWord(String word, MutableLiveData<ApiResult<VocabularyLookup>> resultLiveData) {
+        resultLiveData.setValue(ApiResult.Loading.getInstance());
 
-        ocrManager.recognizeText(bitmap)
-                .thenAccept(result -> {
-                    if (result != null && !result.isEmpty()) {
-                        future.complete(ApiResult.success(result));
-                    } else {
-                        future.complete(ApiResult.error("No text found in image"));
+        executorProvider.getIoExecutor().execute(() -> {
+            try {
+                Response<List<DictionaryWordDto>> response = dictionaryService.getWordData(word.trim().toLowerCase()).execute();
+
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    DictionaryWordDto dto = response.body().get(0);
+
+                    String meaning = "Chưa có định nghĩa";
+                    if (!dto.getMeanings().isEmpty() && !dto.getMeanings().get(0).getDefinitions().isEmpty()) {
+                        meaning = dto.getMeanings().get(0).getDefinitions().get(0).getDefinition();
                     }
-                })
-                .exceptionally(throwable -> {
-                    future.complete(ApiResult.error("OCR failed: " + throwable.getMessage()));
-                    return null;
-                });
 
-        return future;
-    }
+                    VocabularyLookup lookup = new VocabularyLookup(dto.getWord(), meaning, dto.getPhonetic());
 
-    @Override
-    public CompletableFuture<ApiResult<Vocabulary>> getWordDefinition(String word) {
-        CompletableFuture<ApiResult<Vocabulary>> future = new CompletableFuture<>();
-
-        try {
-            Response<List<DictionaryResponseDto>> response =
-                    dictionaryService.lookupWord(word.trim()).execute();
-
-            if (response.isSuccessful() && response.body() != null) {
-                List<DictionaryResponseDto> dtos = response.body();
-                if (!dtos.isEmpty()) {
-                    Vocabulary vocabulary = DictionaryMapper.mapToVocabulary(dtos.get(0));
-                    if (vocabulary != null) {
-                        future.complete(ApiResult.success(vocabulary));
-                    } else {
-                        future.complete(ApiResult.error("Failed to parse word data"));
-                    }
+                    executorProvider.postToMainThread(() ->
+                            resultLiveData.setValue(ApiResult.Success.create(lookup))
+                    );
                 } else {
-                    future.complete(ApiResult.error("Word '" + word + "' not found"));
+                    executorProvider.postToMainThread(() ->
+                            resultLiveData.setValue(ApiResult.Error.create("Không tìm thấy từ vựng này trong hệ thống."))
+                    );
                 }
-            } else {
-                future.complete(ApiResult.error("Network error: " + response.code()));
+            } catch (Exception e) {
+                executorProvider.postToMainThread(() ->
+                        resultLiveData.setValue(ApiResult.Error.create("Lỗi kết nối: " + e.getMessage()))
+                );
             }
-        } catch (Exception e) {
-            future.complete(ApiResult.error("Error: " + e.getMessage()));
-        }
-
-        return future;
+        });
     }
 
-    @Override
-    public CompletableFuture<ApiResult<Void>> saveVocabulary(Vocabulary vocabulary) {
-        CompletableFuture<ApiResult<Void>> future = new CompletableFuture<>();
+    public void checkAndSaveVocabulary(VocabularyEntity entity, boolean forceUpdate, MutableLiveData<ApiResult<String>> saveStateLiveData) {
+        saveStateLiveData.setValue(ApiResult.Loading.getInstance());
 
-        try {
-            // Kiểm tra từ đã tồn tại
-            List<VocabularyEntity> existing = vocabularyDao.getAllVocabularies().getValue();
-            if (existing != null) {
-                for (VocabularyEntity entity : existing) {
-                    if (entity.getWord().equalsIgnoreCase(vocabulary.getWord())) {
-                        future.complete(ApiResult.error(
-                                "Word '" + vocabulary.getWord() + "' already exists"
-                        ));
-                        return future;
-                    }
+        executorProvider.getIoExecutor().execute(() -> {
+            try {
+                VocabularyEntity existing = vocabularyDao.findByWord(entity.getWord(), entity.getSourceType());
+
+                if (existing != null && !forceUpdate) {
+                    executorProvider.postToMainThread(() ->
+                            saveStateLiveData.setValue(ApiResult.Fallback.getInstance())
+                    );
+                    return;
                 }
+
+                if (existing != null) {
+                    VocabularyEntity updatedEntity = new VocabularyEntity(
+                            existing.getVocabularyId(),
+                            entity.getTopicId(),
+                            existing.getWord(),
+                            entity.getMeaning(),
+                            entity.getPhonetic(),
+                            entity.getExampleSentence(),
+                            entity.getImagePath(),
+                            entity.getAudioPath(),
+                            entity.getSourceType(),
+                            existing.getMasteryLevel(),
+                            existing.isMastered(),
+                            existing.getNextReviewDate(),
+                            existing.getCreatedAt(),
+                            System.currentTimeMillis()
+                    );
+                    vocabularyDao.update(updatedEntity);
+                } else {
+                    vocabularyDao.insert(entity);
+                }
+
+                executorProvider.postToMainThread(() ->
+                        saveStateLiveData.setValue(ApiResult.Success.create("Lưu từ vựng thành công!"))
+                );
+
+            } catch (Exception e) {
+                executorProvider.postToMainThread(() ->
+                        saveStateLiveData.setValue(ApiResult.Error.create("Lỗi lưu cơ sở dữ liệu: " + e.getMessage()))
+                );
             }
-
-            VocabularyEntity entity = vocabulary.toEntity();
-            long id = vocabularyDao.insertVocabulary(entity);
-
-            if (id > 0) {
-                future.complete(ApiResult.success(null));
-            } else {
-                future.complete(ApiResult.error("Failed to save vocabulary"));
-            }
-        } catch (Exception e) {
-            future.complete(ApiResult.error("Save error: " + e.getMessage()));
-        }
-
-        return future;
+        });
     }
 }

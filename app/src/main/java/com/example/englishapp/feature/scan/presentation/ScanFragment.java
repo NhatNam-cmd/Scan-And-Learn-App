@@ -1,23 +1,26 @@
 package com.example.englishapp.feature.scan.presentation;
 
 import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -26,14 +29,16 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.englishapp.R;
-import com.example.englishapp.feature.scan.presentation.state.ScanUiEvent;
-import com.example.englishapp.feature.scan.presentation.state.ScanUiState;
+import com.example.englishapp.core.service.OcrManager;
+import com.example.englishapp.core.ui.ApiResult;
+import com.example.englishapp.data.local.entity.VocabularyEntity;
+import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.mlkit.vision.common.InputImage;
 
-import java.io.ByteArrayOutputStream;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.nio.ByteBuffer;
+import java.util.concurrent.ExecutionException;
+
+import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
@@ -41,259 +46,205 @@ import dagger.hilt.android.AndroidEntryPoint;
 public class ScanFragment extends Fragment {
 
     private ScanViewModel viewModel;
-
-    // Views
     private PreviewView previewView;
-    private ImageView capturedImageView;
-    private TextView resultTextView;
-    private TextView wordDisplayTextView;
-    private TextView meaningTextView;
-    private TextView phoneticTextView;
+    private MaterialButton captureButton;
     private ProgressBar progressBar;
-    private Button captureButton;
-    private Button lookupButton;
-    private Button saveButton;
-    private Button clearButton;
-
+    private View loadingOverlay;
     private ImageCapture imageCapture;
-    private ExecutorService cameraExecutor;
-    private Bitmap capturedBitmap;
+
+    private VocabularyEntity pendingVocabulary;
+
+    @Inject
+    public OcrManager ocrManager;
+
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    startCamera();
+                } else {
+                    Toast.makeText(requireContext(), "Cần cấp quyền Camera để sử dụng tính năng này", Toast.LENGTH_SHORT).show();
+                }
+            });
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_scan, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        // Init ViewModel
         viewModel = new ViewModelProvider(this).get(ScanViewModel.class);
 
-        // Init Views
-        initViews(view);
-
-        // Setup Camera
-        cameraExecutor = Executors.newSingleThreadExecutor();
-        startCamera();
-
-        // Setup Listeners
-        setupListeners();
-
-        // Observe State
-        observeState();
-    }
-
-    private void initViews(View view) {
-        // ⚠️ Đổi từ previewView -> preview_view (khớp với ID trong XML)
         previewView = view.findViewById(R.id.preview_view);
-        capturedImageView = view.findViewById(R.id.capturedImageView);
-        resultTextView = view.findViewById(R.id.resultTextView);
-        wordDisplayTextView = view.findViewById(R.id.wordDisplayTextView);
-        meaningTextView = view.findViewById(R.id.meaningTextView);
-        phoneticTextView = view.findViewById(R.id.phoneticTextView);
-        progressBar = view.findViewById(R.id.progressBar);
         captureButton = view.findViewById(R.id.captureButton);
-        lookupButton = view.findViewById(R.id.lookupButton);
-        saveButton = view.findViewById(R.id.saveButton);
-        clearButton = view.findViewById(R.id.clearButton);
+        progressBar = view.findViewById(R.id.progressBar);
+        loadingOverlay = view.findViewById(R.id.loading_overlay);
 
-        // Mặc định ẩn các button
-        lookupButton.setVisibility(View.GONE);
-        saveButton.setVisibility(View.GONE);
-        clearButton.setVisibility(View.GONE);
-        capturedImageView.setVisibility(View.GONE);
-        resultTextView.setVisibility(View.GONE);
-        wordDisplayTextView.setVisibility(View.GONE);
-        meaningTextView.setVisibility(View.GONE);
-        phoneticTextView.setVisibility(View.GONE);
-    }
-
-    private void setupListeners() {
-        captureButton.setOnClickListener(v -> capturePhoto());
-
-        lookupButton.setOnClickListener(v -> {
-            String scannedText = resultTextView.getText().toString();
-            if (!scannedText.isEmpty()) {
-                viewModel.handleEvent(new ScanUiEvent.LookupWord(scannedText));
-            }
-        });
-
-        saveButton.setOnClickListener(v -> {
-            viewModel.handleEvent(ScanUiEvent.SaveWord.INSTANCE);
-        });
-
-        clearButton.setOnClickListener(v -> {
-            viewModel.handleEvent(ScanUiEvent.ClearResult.INSTANCE);
-            resetUI();
-        });
-    }
-
-    private void observeState() {
-        viewModel.getState().observe(getViewLifecycleOwner(), this::updateUI);
-    }
-
-    private void updateUI(ScanUiState state) {
-        if (state instanceof ScanUiState.Loading) {
-            progressBar.setVisibility(View.VISIBLE);
-            captureButton.setEnabled(false);
-            return;
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            startCamera();
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.CAMERA);
         }
 
-        progressBar.setVisibility(View.GONE);
-        captureButton.setEnabled(true);
+        captureButton.setOnClickListener(v -> takePhoto());
 
-        if (state instanceof ScanUiState.Idle) {
-            resetUI();
-        } else if (state instanceof ScanUiState.ScannedText) {
-            String text = ((ScanUiState.ScannedText) state).getText();
-            resultTextView.setVisibility(View.VISIBLE);
-            resultTextView.setText("Scanned: " + text);
-            lookupButton.setVisibility(View.VISIBLE);
-            clearButton.setVisibility(View.VISIBLE);
-            saveButton.setVisibility(View.GONE);
-            wordDisplayTextView.setVisibility(View.GONE);
-            meaningTextView.setVisibility(View.GONE);
-            phoneticTextView.setVisibility(View.GONE);
-        } else if (state instanceof ScanUiState.WordFound) {
-            com.example.englishapp.core.model.Vocabulary vocab =
-                    ((ScanUiState.WordFound) state).getVocabulary();
-
-            wordDisplayTextView.setVisibility(View.VISIBLE);
-            wordDisplayTextView.setText(vocab.getWord());
-
-            phoneticTextView.setVisibility(View.VISIBLE);
-            phoneticTextView.setText("Phonetic: " + vocab.getPhonetic());
-
-            meaningTextView.setVisibility(View.VISIBLE);
-            meaningTextView.setText("Meaning: " + vocab.getMeaning());
-
-            lookupButton.setVisibility(View.GONE);
-            saveButton.setVisibility(View.VISIBLE);
-            clearButton.setVisibility(View.VISIBLE);
-
-        } else if (state instanceof ScanUiState.WordSaved) {
-            String word = ((ScanUiState.WordSaved) state).getWord();
-            Toast.makeText(requireContext(), "Saved: " + word, Toast.LENGTH_SHORT).show();
-            resetUI();
-        } else if (state instanceof ScanUiState.Error) {
-            String message = ((ScanUiState.Error) state).getMessage();
-            Toast.makeText(requireContext(), "Error: " + message, Toast.LENGTH_LONG).show();
-            resetUI();
-        }
-    }
-
-    private void resetUI() {
-        capturedImageView.setVisibility(View.GONE);
-        resultTextView.setVisibility(View.GONE);
-        wordDisplayTextView.setVisibility(View.GONE);
-        meaningTextView.setVisibility(View.GONE);
-        phoneticTextView.setVisibility(View.GONE);
-        lookupButton.setVisibility(View.GONE);
-        saveButton.setVisibility(View.GONE);
-        clearButton.setVisibility(View.GONE);
-        capturedBitmap = null;
+        setupObservers();
     }
 
     private void startCamera() {
-        ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
-                ProcessCameraProvider.getInstance(requireContext());
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
 
         cameraProviderFuture.addListener(() -> {
             try {
                 ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-
                 Preview preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-                imageCapture = new ImageCapture.Builder()
-                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                        .build();
-
+                imageCapture = new ImageCapture.Builder().build();
                 CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
 
                 cameraProvider.unbindAll();
-                cameraProvider.bindToLifecycle(
-                        getViewLifecycleOwner(),
-                        cameraSelector,
-                        preview,
-                        imageCapture
-                );
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(requireContext(), "Camera error: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+            } catch (ExecutionException | InterruptedException e) {
+                Toast.makeText(requireContext(), "Lỗi khởi tạo Camera", Toast.LENGTH_SHORT).show();
             }
         }, ContextCompat.getMainExecutor(requireContext()));
     }
 
-    private void capturePhoto() {
+    private void takePhoto() {
         if (imageCapture == null) return;
 
-        imageCapture.takePicture(ContextCompat.getMainExecutor(requireContext()),
-                new ImageCapture.OnImageCapturedCallback() {
-                    @Override
-                    public void onCaptureSuccess(@NonNull androidx.camera.core.ImageProxy image) {
-                        super.onCaptureSuccess(image);
+        loadingOverlay.setVisibility(View.VISIBLE);
+        captureButton.setEnabled(false);
 
-                        // Convert ImageProxy to Bitmap
-                        androidx.camera.core.ImageProxy imageProxy = image;
-                        Bitmap bitmap = imageProxyToBitmap(imageProxy);
-                        image.close();
+        imageCapture.takePicture(ContextCompat.getMainExecutor(requireContext()), new ImageCapture.OnImageCapturedCallback() {
+            @Override
+            public void onCaptureSuccess(@NonNull ImageProxy image) {
+                Bitmap bitmap = imageProxyToBitmap(image);
+                image.close();
+                processImageWithOcr(bitmap);
+            }
 
-                        if (bitmap != null) {
-                            capturedBitmap = bitmap;
-                            capturedImageView.setVisibility(View.VISIBLE);
-                            capturedImageView.setImageBitmap(bitmap);
-
-                            // Process OCR
-                            viewModel.handleEvent(new ScanUiEvent.ScanImage(bitmap));
-                        } else {
-                            Toast.makeText(requireContext(), "Failed to capture image",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    @Override
-                    public void onError(@NonNull ImageCaptureException exception) {
-                        super.onError(exception);
-                        Toast.makeText(requireContext(), "Capture error: " + exception.getMessage(),
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
+            @Override
+            public void onError(@NonNull ImageCaptureException exception) {
+                loadingOverlay.setVisibility(View.GONE);
+                captureButton.setEnabled(true);
+                Toast.makeText(requireContext(), "Lỗi chụp ảnh: " + exception.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private Bitmap imageProxyToBitmap(androidx.camera.core.ImageProxy image) {
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
+    private Bitmap imageProxyToBitmap(ImageProxy image) {
+        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes);
+        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
-            // Lấy dữ liệu YUV từ ImageProxy
-            android.media.Image mediaImage = image.getImage();
-            if (mediaImage == null) return null;
-
-            // Chuyển đổi YUV sang JPEG
-            java.nio.ByteBuffer buffer = mediaImage.getPlanes()[0].getBuffer();
-            byte[] bytes = new byte[buffer.remaining()];
-            buffer.get(bytes);
-
-            // Decode thành bitmap
-            return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+        Matrix matrix = new Matrix();
+        matrix.postRotate(image.getImageInfo().getRotationDegrees());
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.Height(), matrix, true);
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (cameraExecutor != null) {
-            cameraExecutor.shutdown();
-        }
+    private void processImageWithOcr(Bitmap bitmap) {
+        ocrManager.recognizeText(bitmap, new OcrManager.OcrCallback() {
+            @Override
+            public void onSuccess(String text) {
+                if (text != null && !text.trim().isEmpty()) {
+                    viewModel.lookupScannedWord(text.trim());
+                } else {
+                    loadingOverlay.setVisibility(View.GONE);
+                    captureButton.setEnabled(true);
+                    Toast.makeText(requireContext(), "Không tìm thấy văn bản trong ảnh", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                loadingOverlay.setVisibility(View.GONE);
+                captureButton.setEnabled(true);
+                Toast.makeText(requireContext(), "Lỗi nhận diện văn bản", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void setupObservers() {
+        viewModel.lookupResult.observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof ApiResult.Loading) {
+                loadingOverlay.setVisibility(View.VISIBLE);
+                captureButton.setEnabled(false);
+            } else if (result instanceof ApiResult.Success) {
+                loadingOverlay.setVisibility(View.GONE);
+                captureButton.setEnabled(true);
+
+                WordPreviewDialog dialog = WordPreviewDialog.newInstance(((ApiResult.Success<com.example.englishapp.domain.model.VocabularyLookup>) result).getData());
+                dialog.show(getChildFragmentManager(), "WordPreviewDialog");
+                viewModel.resetLookupState();
+
+            } else if (result instanceof ApiResult.Error) {
+                loadingOverlay.setVisibility(View.GONE);
+                captureButton.setEnabled(true);
+                Toast.makeText(requireContext(), ((ApiResult.Error) result).getMessage(), Toast.LENGTH_LONG).show();
+                viewModel.resetLookupState();
+            }
+        });
+
+        viewModel.saveResult.observe(getViewLifecycleOwner(), result -> {
+            if (result instanceof ApiResult.Loading) {
+                loadingOverlay.setVisibility(View.VISIBLE);
+            } else if (result instanceof ApiResult.Success) {
+                loadingOverlay.setVisibility(View.GONE);
+                Toast.makeText(requireContext(), ((ApiResult.Success<String>) result).getData(), Toast.LENGTH_SHORT).show();
+                viewModel.resetSaveState();
+                pendingVocabulary = null;
+            } else if (result instanceof ApiResult.Fallback) {
+                loadingOverlay.setVisibility(View.GONE);
+                showDuplicateChoiceDialog();
+                viewModel.resetSaveState();
+            } else if (result instanceof ApiResult.Error) {
+                loadingOverlay.setVisibility(View.GONE);
+                Toast.makeText(requireContext(), ((ApiResult.Error) result).getMessage(), Toast.LENGTH_SHORT).show();
+                viewModel.resetSaveState();
+            }
+        });
+    }
+
+    public void setPendingVocabulary(VocabularyEntity entity) {
+        this.pendingVocabulary = entity;
+    }
+
+    private void showDuplicateChoiceDialog() {
+        if (pendingVocabulary == null) return;
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Từ vựng đã tồn tại")
+                .setMessage("Từ vựng này đã có trong hệ thống. Bạn muốn cập nhật ngữ cảnh cho từ cũ hay lưu thành một từ mới hoàn toàn?")
+                .setPositiveButton("Cập nhật", (dialog, which) -> {
+                    viewModel.saveScannedVocabulary(pendingVocabulary, true);
+                })
+                .setNegativeButton("Lưu từ mới", (dialog, which) -> {
+                    pendingVocabulary = new VocabularyEntity(
+                            0L,
+                            pendingVocabulary.getTopicId(),
+                            pendingVocabulary.getWord(),
+                            pendingVocabulary.getMeaning(),
+                            pendingVocabulary.getPhonetic(),
+                            pendingVocabulary.getExampleSentence(),
+                            pendingVocabulary.getImagePath(),
+                            pendingVocabulary.getAudioPath(),
+                            pendingVocabulary.getSourceType(),
+                            0,
+                            false,
+                            System.currentTimeMillis(),
+                            System.currentTimeMillis(),
+                            System.currentTimeMillis()
+                    );
+                    viewModel.saveScannedVocabulary(pendingVocabulary, false);
+                })
+                .setNeutralButton("Hủy", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false)
+                .show();
     }
 }

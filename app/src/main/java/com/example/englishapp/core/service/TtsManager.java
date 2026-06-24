@@ -2,83 +2,52 @@ package com.example.englishapp.core.service;
 
 import android.content.Context;
 import android.speech.tts.TextToSpeech;
-import android.speech.tts.UtteranceProgressListener;
-
+import java.util.LinkedList;
 import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
-
+import java.util.Queue;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class TtsManager {
+public class TtsManager implements TextToSpeech.OnInitListener {
 
     private TextToSpeech tts;
     private boolean isInitialized = false;
-    private final Context context;
+    private final Queue<String> pendingWords = new LinkedList<>();
 
     @Inject
     public TtsManager(Context context) {
-        this.context = context;
-        initializeTts();
+        tts = new TextToSpeech(context, this);
     }
 
-    private void initializeTts() {
-        tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                isInitialized = status == TextToSpeech.SUCCESS;
-                if (isInitialized) {
-                    tts.setLanguage(Locale.US);
-                    tts.setSpeechRate(1.0f);
-                    tts.setPitch(1.0f);
-                }
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            int result = tts.setLanguage(Locale.US);
+            if (result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED) {
+                isInitialized = true;
+                flushQueue();
             }
-        });
-    }
-
-    /**
-     * Phát âm thanh của từ
-     */
-    public CompletableFuture<Boolean> speakWord(String word, float speechRate) {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
-
-        if (!isInitialized || tts == null) {
-            future.completeExceptionally(new Exception("TTS not initialized"));
-            return future;
         }
+    }
 
-        tts.setSpeechRate(speechRate);
-        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-            @Override
-            public void onStart(String utteranceId) {}
-
-            @Override
-            public void onDone(String utteranceId) {
-                future.complete(true);
-            }
-
-            @Override
-            public void onError(String utteranceId) {
-                future.completeExceptionally(new Exception("TTS error"));
-            }
-        });
-
-        int result = tts.speak(word, TextToSpeech.QUEUE_FLUSH, null, word);
-        if (result != TextToSpeech.SUCCESS) {
-            future.completeExceptionally(new Exception("Failed to start TTS"));
+    public void speakWord(String word) {
+        if (word == null || word.trim().isEmpty()) {
+            return;
         }
-
-        return future;
+        if (isInitialized) {
+            tts.speak(word, TextToSpeech.QUEUE_FLUSH, null, null);
+        } else {
+            pendingWords.add(word);
+        }
     }
 
-    public CompletableFuture<Boolean> speakWord(String word) {
-        return speakWord(word, 1.0f);
-    }
-
-    public void stop() {
-        if (tts != null) {
-            tts.stop();
+    private void flushQueue() {
+        while (!pendingWords.isEmpty()) {
+            String word = pendingWords.poll();
+            if (word != null) {
+                tts.speak(word, TextToSpeech.QUEUE_ADD, null, null);
+            }
         }
     }
 
@@ -86,8 +55,6 @@ public class TtsManager {
         if (tts != null) {
             tts.stop();
             tts.shutdown();
-            tts = null;
-            isInitialized = false;
         }
     }
 }

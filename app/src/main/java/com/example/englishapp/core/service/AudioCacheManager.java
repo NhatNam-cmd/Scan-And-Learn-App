@@ -2,38 +2,37 @@ package com.example.englishapp.core.service;
 
 import android.content.Context;
 import android.media.MediaPlayer;
-
+import com.example.englishapp.core.utils.ExecutorProvider;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class AudioCacheManager {
-
     private final File cacheDir;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ExecutorProvider executorProvider;
 
     @Inject
-    public AudioCacheManager(Context context) {
+    public AudioCacheManager(Context context, ExecutorProvider executorProvider) {
         this.cacheDir = context.getCacheDir();
+        this.executorProvider = executorProvider;
     }
 
-    /**
-     * Lấy file âm thanh từ cache hoặc download
-     */
     public CompletableFuture<File> getAudioFile(String word, String audioUrl) {
         CompletableFuture<File> future = new CompletableFuture<>();
 
-        executor.execute(() -> {
+        executorProvider.getIoExecutor().execute(() -> {
             try {
-                String fileName = word.toLowerCase() + ".mp3";
+                String extension = audioUrl.substring(audioUrl.lastIndexOf("."));
+                if (!extension.matches("\\.[a-zA-Z0-9]+")) {
+                    extension = ".mp3";
+                }
+
+                String fileName = word.toLowerCase() + extension;
                 File audioDir = new File(cacheDir, "audio");
                 if (!audioDir.exists()) {
                     audioDir.mkdirs();
@@ -41,83 +40,55 @@ public class AudioCacheManager {
 
                 File cacheFile = new File(audioDir, fileName);
 
-                // Nếu file đã tồn tại trong cache
                 if (cacheFile.exists() && cacheFile.length() > 0) {
                     future.complete(cacheFile);
                     return;
                 }
 
-                // Download audio
-                boolean downloaded = downloadAudio(audioUrl, cacheFile);
-                if (downloaded && cacheFile.exists() && cacheFile.length() > 0) {
+                if (downloadAudio(audioUrl, cacheFile)) {
                     future.complete(cacheFile);
                 } else {
-                    future.completeExceptionally(new Exception("Failed to download audio"));
+                    future.completeExceptionally(new Exception("Download failed"));
                 }
-
             } catch (Exception e) {
                 future.completeExceptionally(e);
             }
         });
-
         return future;
     }
 
-    private boolean downloadAudio(String audioUrl, File outputFile) {
-        try {
-            URL url = new URL(audioUrl);
-            java.net.HttpURLConnection connection =
-                    (java.net.HttpURLConnection) url.openConnection();
-            connection.connect();
-
-            InputStream inputStream = connection.getInputStream();
-            FileOutputStream outputStream = new FileOutputStream(outputFile);
-
-            byte[] buffer = new byte[4096];
+    private boolean downloadAudio(String urlString, File destination) {
+        try (InputStream in = new URL(urlString).openStream();
+             FileOutputStream out = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[1024];
             int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
+            while ((bytesRead = in.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
             }
-
-            outputStream.flush();
-            outputStream.close();
-            inputStream.close();
-            connection.disconnect();
-
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
     }
 
-    public MediaPlayer playAudio(File file) {
-        try {
-            MediaPlayer mediaPlayer = new MediaPlayer();
-            mediaPlayer.setDataSource(file.getAbsolutePath());
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-            return mediaPlayer;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+    public void playAudio(File file) {
+        executorProvider.postToMainThread(() -> {
+            try {
+                MediaPlayer mediaPlayer = new MediaPlayer();
+                mediaPlayer.setDataSource(file.getAbsolutePath());
+                mediaPlayer.prepareAsync();
 
-    public void clearOldCache(int days) {
-        File audioDir = new File(cacheDir, "audio");
-        if (!audioDir.exists()) return;
+                mediaPlayer.setOnPreparedListener(MediaPlayer::start);
 
-        long currentTime = System.currentTimeMillis();
-        long maxAge = days * 24 * 60 * 60 * 1000L;
+                mediaPlayer.setOnCompletionListener(MediaPlayer::release);
 
-        File[] files = audioDir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (currentTime - file.lastModified() > maxAge) {
-                    file.delete();
-                }
+                mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                    mp.release();
+                    return true;
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }
+        });
     }
 }
