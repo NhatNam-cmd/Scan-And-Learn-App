@@ -1,5 +1,5 @@
 package com.example.englishapp.feature.scan.presentation;
-
+import com.google.mlkit.vision.text.Text;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -29,6 +30,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.englishapp.R;
+import com.example.englishapp.core.model.VocabularyLookup;
 import com.example.englishapp.core.service.OcrManager;
 import com.example.englishapp.core.common.ApiResult;
 import com.example.englishapp.core.database.entity.VocabularyEntity;
@@ -152,6 +154,14 @@ public class ScanFragment extends Fragment {
     private void processImageWithOcr(Bitmap bitmap) {
         ocrManager.recognizeText(bitmap, new OcrManager.OcrCallback() {
             @Override
+            public void onSuccess(Text visionText) {
+                loadingOverlay.setVisibility(View.GONE);
+                captureButton.setEnabled(true);
+
+                showTextSelectionDialog(visionText.getText());
+            }
+
+            @Override
             public void onSuccess(String text) {
                 if (text != null && !text.trim().isEmpty()) {
                     viewModel.lookupScannedWord(text.trim());
@@ -159,32 +169,37 @@ public class ScanFragment extends Fragment {
                     loadingOverlay.setVisibility(View.GONE);
                     captureButton.setEnabled(true);
                     Toast.makeText(requireContext(), "Không tìm thấy văn bản trong ảnh", Toast.LENGTH_SHORT).show();
+                    }
                 }
-            }
 
-            @Override
-            public void onError(Exception e) {
-                loadingOverlay.setVisibility(View.GONE);
-                captureButton.setEnabled(true);
-                Toast.makeText(requireContext(), "Lỗi nhận diện văn bản", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
+                @Override
+                public void onError(Exception e) {
+                    loadingOverlay.setVisibility(View.GONE);
+                    captureButton.setEnabled(true);
+                    Toast.makeText(requireContext(), "Lỗi nhận diện văn bản", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
 
     private void setupObservers() {
         viewModel.lookupResult.observe(getViewLifecycleOwner(), result -> {
-            // FIX LỖI ÉP KIỂU: Dùng .getClass() thay vì instanceof
             if (result.getClass() == ApiResult.Loading.class) {
                 loadingOverlay.setVisibility(View.VISIBLE);
             } else if (result instanceof ApiResult.Success) {
                 loadingOverlay.setVisibility(View.GONE);
                 captureButton.setEnabled(true);
 
-                WordPreviewDialog dialog = WordPreviewDialog.newInstance(((ApiResult.Success<com.example.englishapp.core.model.VocabularyLookup>) result).getData());
-                dialog.show(getChildFragmentManager(), "WordPreviewDialog");
+                ApiResult.Success<VocabularyLookup> successResult = (ApiResult.Success<VocabularyLookup>) result;
+                if (successResult.getData() != null) {
+                    WordPreviewDialog dialog = WordPreviewDialog.newInstance(successResult.getData());
+                    dialog.show(getChildFragmentManager(), "WordPreviewDialog");
+                } else {
+                    Toast.makeText(requireContext(), "Không lấy được dữ liệu từ vựng", Toast.LENGTH_SHORT).show();
+                }
                 viewModel.resetLookupState();
+            }
 
-            } else if (result instanceof ApiResult.Error) {
+             else if (result instanceof ApiResult.Error) {
                 loadingOverlay.setVisibility(View.GONE);
                 captureButton.setEnabled(true);
                 Toast.makeText(requireContext(), ((ApiResult.Error<?>) result).getMessage(), Toast.LENGTH_LONG).show();
@@ -193,7 +208,6 @@ public class ScanFragment extends Fragment {
         });
 
         viewModel.saveResult.observe(getViewLifecycleOwner(), result -> {
-            // FIX LỖI ÉP KIỂU: Dùng .getClass() thay vì instanceof
             if (result.getClass() == ApiResult.Loading.class) {
                 loadingOverlay.setVisibility(View.VISIBLE);
             } else if (result instanceof ApiResult.Success) {
@@ -248,6 +262,24 @@ public class ScanFragment extends Fragment {
                 })
                 .setNeutralButton("Hủy", (dialog, which) -> dialog.dismiss())
                 .setCancelable(false)
+                .show();
+    }
+    private void showTextSelectionDialog(String rawText) {
+        EditText editText = new EditText(requireContext());
+        editText.setText(rawText);
+        editText.setPadding(32, 32, 32, 32);
+
+        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Chọn từ cần tra")
+                .setMessage("Chỉnh sửa lại văn bản nếu cần:")
+                .setView(editText)
+                .setPositiveButton("Tra từ", (dialog, which) -> {
+                    String selectedText = editText.getText().toString().trim();
+                    if (!selectedText.isEmpty()) {
+                        viewModel.lookupScannedWord(selectedText);
+                    }
+                })
+                .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
                 .show();
     }
 }

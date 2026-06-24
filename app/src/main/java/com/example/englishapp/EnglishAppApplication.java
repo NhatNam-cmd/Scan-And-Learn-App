@@ -1,7 +1,7 @@
 package com.example.englishapp;
 
 import android.app.Application;
-
+import com.google.firebase.FirebaseApp;
 import com.example.englishapp.core.common.ExecutorProvider;
 import com.example.englishapp.core.database.AppDatabase;
 import com.example.englishapp.core.database.seed.VocabularySeeder;
@@ -21,6 +21,7 @@ public class EnglishAppApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        FirebaseApp.initializeApp(this);
         executorProvider.getIoExecutor().execute(() -> VocabularySeeder.seedIfNeeded(database));
     }
 }

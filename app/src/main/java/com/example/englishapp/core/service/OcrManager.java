@@ -1,5 +1,5 @@
 package com.example.englishapp.core.service;
-
+import com.google.mlkit.vision.text.Text;
 import android.graphics.Bitmap;
 import com.example.englishapp.core.common.ExecutorProvider;
 import com.google.mlkit.vision.common.InputImage;
@@ -16,6 +16,7 @@ public class OcrManager {
     private final ExecutorProvider executorProvider;
 
     public interface OcrCallback {
+        void onSuccess(Text visionText);
         void onSuccess(String text);
         void onError(Exception e);
     }
@@ -34,7 +35,7 @@ public class OcrManager {
 
                 recognizer.process(image)
                         .addOnSuccessListener(executorProvider.getMainExecutor(), visionText -> {
-                            callback.onSuccess(visionText.getText());
+                            callback.onSuccess(visionText);
                         })
                         .addOnFailureListener(executorProvider.getMainExecutor(), callback::onError);
             } catch (Exception e) {
