@@ -2,7 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Network -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- OCR Scan -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
 
     <application
         android:name=".EnglishAppApplication"
@@ -15,17 +22,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EnglishApp"
         android:enableOnBackInvokedCallback="true">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.EnglishApp">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
+
     </application>
 
 </manifest>

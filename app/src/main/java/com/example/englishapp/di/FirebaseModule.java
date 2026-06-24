@@ -1,5 +1,7 @@
 package com.example.englishapp.di;
 
+import com.example.englishapp.core.network.dictionary.DictionaryApiClient;
+import com.example.englishapp.core.network.dictionary.DictionaryService;
 import com.google.firebase.auth.FirebaseAuth;
 
 import javax.inject.Singleton;
@@ -12,9 +14,16 @@ import dagger.hilt.components.SingletonComponent;
 @Module
 @InstallIn(SingletonComponent.class)
 public class FirebaseModule {
+
     @Provides
     @Singleton
-    public static FirebaseAuth provideFirebaseAuth() {
+    public FirebaseAuth provideFirebaseAuth() {
         return FirebaseAuth.getInstance();
+    }
+
+    @Provides
+    @Singleton
+    public DictionaryService provideDictionaryService() {
+        return DictionaryApiClient.getDictionaryService();
     }
 }

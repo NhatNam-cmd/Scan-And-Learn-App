@@ -7,6 +7,7 @@ import java.util.Objects;
 
 /**
  * Sealed-class pattern in Java: represents the result of an API call.
+ * Đã được bổ sung các hàm tương thích ngược (create, getInstance) để support merge code.
  *
  * @param <T> the type of data on success / fallback
  */
@@ -16,18 +17,42 @@ public abstract class ApiResult<T> {
     private ApiResult() {}
 
     /**
+     * Helper methods to create ApiResult instances (Chuẩn của nhánh Core)
+     */
+    @NonNull
+    public static <T> ApiResult<T> success(@Nullable T data) {
+        return new Success<>(data);
+    }
+
+    @NonNull
+    public static <T> ApiResult<T> error(@NonNull String message) {
+        return new Error<>(message);
+    }
+
+    @NonNull
+    public static <T> ApiResult<T> error(@NonNull String message, @Nullable Throwable exception) {
+        return new Error<>(message, exception);
+    }
+
+    /**
      * Represents a successful API result containing data.
      */
     public static final class Success<T> extends ApiResult<T> {
         private final T data;
 
-        public Success(@NonNull T data) {
+        public Success(@Nullable T data) {
             this.data = data;
         }
 
-        @NonNull
+        @Nullable
         public T getData() {
             return data;
+        }
+
+        // Thêm hàm create() để tương thích với code của nhánh Scan
+        @NonNull
+        public static <T> Success<T> create(@Nullable T data) {
+            return new Success<>(data);
         }
 
         @Override
@@ -53,7 +78,7 @@ public abstract class ApiResult<T> {
     /**
      * Represents an error result with a message and an optional exception.
      */
-    public static final class Error extends ApiResult<Void> {
+    public static final class Error<T> extends ApiResult<T> {
         private final String message;
         @Nullable
         private final Throwable exception;
@@ -65,6 +90,17 @@ public abstract class ApiResult<T> {
 
         public Error(@NonNull String message) {
             this(message, null);
+        }
+
+        // Thêm hàm create() để tương thích với code của nhánh Scan
+        @NonNull
+        public static <T> Error<T> create(@NonNull String message) {
+            return new Error<>(message);
+        }
+
+        @NonNull
+        public static <T> Error<T> create(@NonNull String message, @Nullable Throwable exception) {
+            return new Error<>(message, exception);
         }
 
         @NonNull
@@ -81,7 +117,7 @@ public abstract class ApiResult<T> {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            Error error = (Error) o;
+            Error<?> error = (Error<?>) o;
             return Objects.equals(message, error.message)
                     && Objects.equals(exception, error.exception);
         }
@@ -101,14 +137,15 @@ public abstract class ApiResult<T> {
     /**
      * Singleton representing a loading state.
      */
-    public static final class Loading extends ApiResult<Void> {
-        private static final Loading INSTANCE = new Loading();
+    public static final class Loading<T> extends ApiResult<T> {
+        private static final Loading<?> INSTANCE = new Loading<>();
 
         private Loading() {}
 
+        @SuppressWarnings("unchecked")
         @NonNull
-        public static Loading getInstance() {
-            return INSTANCE;
+        public static <T> Loading<T> getInstance() {
+            return (Loading<T>) INSTANCE;
         }
 
         @NonNull
@@ -125,16 +162,22 @@ public abstract class ApiResult<T> {
         private final T data;
         private final String reason;
 
-        public Fallback(@NonNull T data, @NonNull String reason) {
+        public Fallback(@Nullable T data, @NonNull String reason) {
             this.data = data;
             this.reason = reason;
         }
 
-        public Fallback(@NonNull T data) {
+        public Fallback(@Nullable T data) {
             this(data, "AI Quota Exceeded or Network Error");
         }
 
+        // Thêm getInstance() để xử lý các case gọi Fallback không truyền param
         @NonNull
+        public static <T> Fallback<T> getInstance() {
+            return new Fallback<>(null, "Fallback state activated");
+        }
+
+        @Nullable
         public T getData() {
             return data;
         }
