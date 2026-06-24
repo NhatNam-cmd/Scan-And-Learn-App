@@ -2,16 +2,9 @@ plugins {
     alias libs.plugins.androidApplication
     alias libs.plugins.hiltAndroid
     id 'androidx.room' version '2.6.1'
+    id 'com.google.gms.google-services'
 }
 
-// Cấu hình Google Services từ nhánh 2
-if (file("google-services.json").exists()) {
-    apply plugin: "com.google.gms.google-services"
-} else {
-    logger.warn("Missing app/google-services.json. Firebase Google Sign-In will need this file before runtime testing.")
-}
-
-// Logic đọc API Key từ nhánh 2
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -32,7 +25,6 @@ android {
         versionCode 1
         versionName '1.0'
 
-        // Thêm trường BuildConfig cho Gemini API Key (từ nhánh 2)
         buildConfigField "String", "GEMINI_API_KEY", "\"${geminiApiKey}\""
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
