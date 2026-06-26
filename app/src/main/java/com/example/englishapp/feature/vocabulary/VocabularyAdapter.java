@@ -3,7 +3,7 @@ package com.example.englishapp.feature.vocabulary;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,21 +14,26 @@ import com.example.englishapp.core.database.entity.VocabularyEntity;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.VocabularyViewHolder> {
 
-    public interface OnVocabularyClickListener {
+    public interface OnVocabularyInteractionListener {
         void onVocabularyClicked(VocabularyEntity vocabulary);
+        void onVocabularyLongClicked(VocabularyEntity vocabulary);
     }
 
-    private final OnVocabularyClickListener listener;
+    private final OnVocabularyInteractionListener listener;
     private final List<VocabularyEntity> words = new ArrayList<>();
+    private final Set<Long> selectedIds = new HashSet<>();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+    private boolean selectionMode;
 
-    public VocabularyAdapter(OnVocabularyClickListener listener) {
+    public VocabularyAdapter(OnVocabularyInteractionListener listener) {
         this.listener = listener;
         setHasStableIds(true);
     }
@@ -59,13 +64,18 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
         holder.tvPhonetic.setText(isBlank(item.getPhonetic()) ? "/.../" : item.getPhonetic());
         holder.tvSource.setText(formatSource(item.getSourceType()));
         holder.tvMastery.setText(item.isMastered()
-                ? "100%"
-                : Math.min(100, item.getMasteryLevel() * 20) + "%");
-        holder.progressMastery.setProgress(item.isMastered()
-                ? 100
-                : Math.min(100, item.getMasteryLevel() * 20));
+                ? "Level 5"
+                : "Level " + Math.min(5, item.getMasteryLevel()));
+        bindMasterySegments(holder.layoutMasterySegments, item);
         holder.tvReview.setText(buildReviewText(item));
+        boolean selected = selectedIds.contains(item.getVocabularyId());
+        holder.tvSelectedCheck.setVisibility(selected ? View.VISIBLE : View.GONE);
+        holder.itemView.setAlpha(selectionMode && !selected ? 0.78f : 1f);
         holder.itemView.setOnClickListener(v -> listener.onVocabularyClicked(item));
+        holder.itemView.setOnLongClickListener(v -> {
+            listener.onVocabularyLongClicked(item);
+            return true;
+        });
     }
 
     @Override
@@ -86,6 +96,22 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
         return words.get(position);
     }
 
+    public void setSelectionMode(boolean enabled) {
+        selectionMode = enabled;
+        if (!enabled) selectedIds.clear();
+        notifyDataSetChanged();
+    }
+
+    public void setSelectedIds(Set<Long> ids) {
+        selectedIds.clear();
+        if (ids != null) selectedIds.addAll(ids);
+        notifyDataSetChanged();
+    }
+
+    public List<Long> getSelectedIds() {
+        return new ArrayList<>(selectedIds);
+    }
+
     private String buildReviewText(VocabularyEntity item) {
         if (item.isMastered()) return "Không cần ôn";
         long nextReviewDate = item.getNextReviewDate();
@@ -93,6 +119,35 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
             return "Cần ôn hôm nay";
         }
         return "Ôn tiếp: " + dateFormat.format(new Date(nextReviewDate));
+    }
+
+    private void bindMasterySegments(LinearLayout container, VocabularyEntity item) {
+        container.removeAllViews();
+        int level = item.isMastered() ? 5 : Math.max(0, Math.min(5, item.getMasteryLevel()));
+        int activeColor = getMasteryColor(container, level);
+        int inactiveColor = container.getContext().getResources().getColor(android.R.color.darker_gray, null);
+        float density = container.getContext().getResources().getDisplayMetrics().density;
+        for (int i = 1; i <= 5; i++) {
+            View segment = new View(container.getContext());
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, (int) (8 * density), 1f);
+            if (i < 5) params.setMarginEnd((int) (4 * density));
+            segment.setLayoutParams(params);
+            segment.setBackgroundColor(i <= level ? activeColor : inactiveColor);
+            segment.setAlpha(i <= level ? 1f : 0.22f);
+            container.addView(segment);
+        }
+    }
+
+    private int getMasteryColor(LinearLayout container, int level) {
+        int colorRes;
+        if (level <= 1) {
+            colorRes = R.color.light_error;
+        } else if (level <= 3) {
+            colorRes = R.color.light_tertiary;
+        } else {
+            colorRes = R.color.result_correct;
+        }
+        return container.getContext().getResources().getColor(colorRes, null);
     }
 
     private boolean isBlank(String value) {
@@ -114,7 +169,8 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
         private final TextView tvSource;
         private final TextView tvMastery;
         private final TextView tvReview;
-        private final ProgressBar progressMastery;
+        private final TextView tvSelectedCheck;
+        private final LinearLayout layoutMasterySegments;
 
         VocabularyViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -125,7 +181,8 @@ public class VocabularyAdapter extends RecyclerView.Adapter<VocabularyAdapter.Vo
             tvSource = itemView.findViewById(R.id.tv_source);
             tvMastery = itemView.findViewById(R.id.tv_mastery);
             tvReview = itemView.findViewById(R.id.tv_review);
-            progressMastery = itemView.findViewById(R.id.progress_mastery);
+            tvSelectedCheck = itemView.findViewById(R.id.tv_selected_check);
+            layoutMasterySegments = itemView.findViewById(R.id.layout_mastery_segments);
         }
     }
 }

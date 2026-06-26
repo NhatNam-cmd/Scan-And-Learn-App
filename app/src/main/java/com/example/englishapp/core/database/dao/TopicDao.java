@@ -18,4 +18,7 @@ public interface TopicDao {
 
     @Query("SELECT * FROM vocabulary_topic ORDER BY createdAt DESC")
     LiveData<List<TopicEntity>> getAllTopics();
+
+    @Query("SELECT * FROM vocabulary_topic ORDER BY name ASC")
+    List<TopicEntity> getAllTopicsSync();
 }

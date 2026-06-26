@@ -58,6 +58,18 @@
     </fragment>
 
     <fragment
+        android:id="@+id/nav_flashcard_session"
+        android:name="com.example.englishapp.feature.vocabulary.FlashcardSessionFragment"
+        android:label="Flashcard Session"
+        tools:layout="@layout/fragment_flashcard_session" />
+
+    <fragment
+        android:id="@+id/nav_flashcard_result"
+        android:name="com.example.englishapp.feature.vocabulary.FlashcardResultFragment"
+        android:label="Flashcard Result"
+        tools:layout="@layout/fragment_flashcard_result" />
+
+    <fragment
         android:id="@+id/nav_quiz_config"
         android:name="com.example.englishapp.feature.quiz.QuizConfigFragment"
         android:label="Quiz Config" />

@@ -15,6 +15,7 @@ import com.example.englishapp.core.database.entity.StoryEntity;
 import com.example.englishapp.core.database.entity.StoryVocabularyCrossRef;
 import com.example.englishapp.core.database.entity.TopicEntity;
 import com.example.englishapp.core.database.entity.VocabularyEntity;
+import com.example.englishapp.core.database.entity.VocabularyFtsEntity;
 
 @Database(
         entities = {
@@ -24,9 +25,10 @@ import com.example.englishapp.core.database.entity.VocabularyEntity;
                 StoryEntity.class,
                 StoryVocabularyCrossRef.class,
                 QuizSessionEntity.class,
-                QuizQuestionCrossRef.class
+                QuizQuestionCrossRef.class,
+                VocabularyFtsEntity.class
         },
-        version = 1,
+        version = 2,
         exportSchema = true
 )
 public abstract class AppDatabase extends RoomDatabase {

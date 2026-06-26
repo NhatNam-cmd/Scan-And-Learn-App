@@ -7,6 +7,7 @@ import com.example.englishapp.core.common.ApiResult;
 import com.example.englishapp.core.common.ExecutorProvider;
 import com.example.englishapp.core.database.dao.VocabularyDao;
 import com.example.englishapp.core.database.entity.VocabularyEntity;
+import com.example.englishapp.core.database.entity.VocabularyFtsEntity;
 import com.example.englishapp.core.network.dictionary.DictionaryService;
 import com.example.englishapp.core.network.dictionary.dto.DictionaryWordDto;
 import com.example.englishapp.core.model.VocabularyLookup;
@@ -99,8 +100,11 @@ public class ScanRepositoryImpl implements ScanRepository {
                             System.currentTimeMillis()
                     );
                     vocabularyDao.update(updatedEntity);
+                    vocabularyDao.upsertFts(toFtsEntity(updatedEntity));
                 } else {
-                    vocabularyDao.insert(entity);
+                    long id = vocabularyDao.insert(entity);
+                    entity.setVocabularyId(id);
+                    vocabularyDao.upsertFts(toFtsEntity(entity));
                 }
 
                 executorProvider.postToMainThread(() ->
@@ -113,5 +117,16 @@ public class ScanRepositoryImpl implements ScanRepository {
                 );
             }
         });
+    }
+
+    private VocabularyFtsEntity toFtsEntity(VocabularyEntity entity) {
+        return new VocabularyFtsEntity(
+                entity.getVocabularyId(),
+                entity.getWord(),
+                entity.getMeaning(),
+                entity.getPhonetic(),
+                entity.getExampleSentence(),
+                entity.getNote()
+        );
     }
 }

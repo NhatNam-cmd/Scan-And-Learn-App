@@ -12,6 +12,7 @@
         android:orientation="vertical"
         android:padding="20dp">
 
+        <!-- ===== HEADER: Từ + phiên âm + SRS status (luôn hiện) ===== -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -73,130 +74,205 @@
                 android:progressDrawable="@drawable/progress_vocabulary_mastery" />
         </LinearLayout>
 
+        <!-- ===== FLASHCARD PHASE 1: Câu hỏi — ẩn nghĩa, hiện gợi ý ===== -->
         <LinearLayout
+            android:id="@+id/layout_flashcard_question"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="16dp"
             android:background="@drawable/bg_detail_section"
+            android:gravity="center"
             android:orientation="vertical"
-            android:padding="18dp">
+            android:padding="28dp">
 
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Nghĩa"
-                android:textColor="?colorOnSurface"
-                android:textSize="13sp"
+                android:text="🧠"
+                android:textSize="40sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:text="Bạn có nhớ nghĩa của từ này không?"
+                android:textColor="?colorOnBackground"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/tv_meaning"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:lineSpacingExtra="4dp"
-                android:textColor="?colorOnBackground"
-                android:textSize="17sp" />
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text="Hãy nghĩ trong đầu trước khi lật thẻ"
+                android:textColor="?colorOnSurface"
+                android:textSize="13sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_reveal"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginTop="20dp"
+                android:paddingHorizontal="32dp"
+                android:text="Lật thẻ xem nghĩa 👁"
+                android:textAllCaps="false"
+                android:textSize="15sp"
+                app:cornerRadius="16dp" />
         </LinearLayout>
 
+        <!-- ===== FLASHCARD PHASE 2: Đáp án — hiện nghĩa + ví dụ + nút chấm điểm ===== -->
         <LinearLayout
-            android:id="@+id/layout_example"
+            android:id="@+id/layout_flashcard_answer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_detail_section"
+            android:layout_marginTop="16dp"
             android:orientation="vertical"
-            android:padding="18dp">
+            android:visibility="gone">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Ví dụ"
-                android:textColor="?colorOnSurface"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_example"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:lineSpacingExtra="3dp"
-                android:textColor="?colorOnBackground"
-                android:textSize="15sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/layout_note"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_detail_section"
-            android:orientation="vertical"
-            android:padding="18dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Ghi chú"
-                android:textColor="?colorOnSurface"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_note"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:lineSpacingExtra="3dp"
-                android:textColor="?colorOnBackground"
-                android:textSize="15sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_detail_section"
-            android:orientation="vertical"
-            android:padding="18dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Ôn tập nhanh"
-                android:textColor="?colorOnSurface"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
+            <!-- Nghĩa -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/bg_detail_section"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Nghĩa"
+                    android:textColor="?colorOnSurface"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_meaning"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"
+                    android:textColor="?colorOnBackground"
+                    android:textSize="19sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Ví dụ (optional) -->
+            <LinearLayout
+                android:id="@+id/layout_example"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:orientation="horizontal">
+                android:background="@drawable/bg_detail_section"
+                android:orientation="vertical"
+                android:padding="18dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_review_wrong"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    android:text="Chưa nhớ"
-                    android:textAllCaps="false" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ví dụ"
+                    android:textColor="?colorOnSurface"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_review_correct"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:text="Đã nhớ"
-                    android:textAllCaps="false"
-                    app:cornerRadius="12dp" />
+                <TextView
+                    android:id="@+id/tv_example"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="3dp"
+                    android:textColor="?colorOnBackground"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <!-- Ghi chú (optional) -->
+            <LinearLayout
+                android:id="@+id/layout_note"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_detail_section"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ghi chú"
+                    android:textColor="?colorOnSurface"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_note"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="3dp"
+                    android:textColor="?colorOnBackground"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <!-- Nút tự chấm điểm SRS -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_detail_section"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Bạn có nhớ được không?"
+                    android:textColor="?colorOnBackground"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center"
+                    android:text="Hãy đánh giá thật lòng để lịch ôn được chính xác"
+                    android:textColor="?colorOnSurface"
+                    android:textSize="12sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_review_wrong"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:text="😕  Chưa nhớ"
+                        android:textAllCaps="false"
+                        android:textSize="14sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_review_correct"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:text="✅  Đã nhớ!"
+                        android:textAllCaps="false"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 
+        <!-- ===== META: Ngày tạo / cập nhật (luôn hiện) ===== -->
         <TextView
             android:id="@+id/tv_meta"
             android:layout_width="match_parent"
@@ -208,6 +284,7 @@
             android:textColor="?colorOnSurface"
             android:textSize="13sp" />
 
+        <!-- ===== ACTIONS: Sửa / Xóa ===== -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -234,5 +311,6 @@
                 android:text="Xóa"
                 android:textAllCaps="false" />
         </LinearLayout>
+
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

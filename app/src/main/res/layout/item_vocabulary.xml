@@ -65,6 +65,19 @@
             android:textColor="@color/light_on_secondary_container"
             android:textSize="11sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_selected_check"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_vocabulary_initial"
+            android:gravity="center"
+            android:text="✓"
+            android:textColor="@color/light_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
     </LinearLayout>
 
     <TextView
@@ -85,14 +98,12 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <ProgressBar
-            android:id="@+id/progress_mastery"
-            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        <LinearLayout
+            android:id="@+id/layout_mastery_segments"
             android:layout_width="0dp"
-            android:layout_height="7dp"
+            android:layout_height="8dp"
             android:layout_weight="1"
-            android:max="100"
-            android:progressDrawable="@drawable/progress_vocabulary_mastery" />
+            android:orientation="horizontal" />
 
         <TextView
             android:id="@+id/tv_mastery"

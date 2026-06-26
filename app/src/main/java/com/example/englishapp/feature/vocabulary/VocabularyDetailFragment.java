@@ -1,5 +1,7 @@
 package com.example.englishapp.feature.vocabulary;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,12 +29,33 @@ import java.util.Locale;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
+/**
+ * Màn chi tiết từ vựng với chế độ Flashcard (SRS chuẩn).
+ *
+ * Luồng:
+ *   QUESTION phase → user tự nhớ nghĩa → bấm "Lật thẻ"
+ *   ANSWER phase   → hiện nghĩa + ví dụ → user chọn "Đã nhớ" / "Chưa nhớ"
+ *   → SRS engine cập nhật lịch ôn
+ */
 @AndroidEntryPoint
 public class VocabularyDetailFragment extends Fragment {
 
+    /** Trạng thái flashcard */
+    private enum FlashcardPhase { QUESTION, ANSWER }
+
     private VocabularyViewModel viewModel;
     private VocabularyEntity currentVocabulary;
+    private FlashcardPhase currentPhase = FlashcardPhase.QUESTION;
+    private boolean hasReviewedThisSession = false;
+
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+
+    // Views
+    private View layoutFlashcardQuestion;
+    private View layoutFlashcardAnswer;
+    private MaterialButton btnReveal;
+    private MaterialButton btnReviewCorrect;
+    private MaterialButton btnReviewWrong;
 
     @Nullable
     @Override
@@ -47,16 +70,23 @@ public class VocabularyDetailFragment extends Fragment {
         viewModel = new ViewModelProvider(this).get(VocabularyViewModel.class);
         long vocabularyId = requireArguments().getLong("vocabularyId");
 
+        // Bind views
+        layoutFlashcardQuestion = view.findViewById(R.id.layout_flashcard_question);
+        layoutFlashcardAnswer = view.findViewById(R.id.layout_flashcard_answer);
+        btnReveal = view.findViewById(R.id.btn_reveal);
+        btnReviewCorrect = view.findViewById(R.id.btn_review_correct);
+        btnReviewWrong = view.findViewById(R.id.btn_review_wrong);
         MaterialButton btnEdit = view.findViewById(R.id.btn_edit);
         MaterialButton btnDelete = view.findViewById(R.id.btn_delete);
-        MaterialButton btnReviewCorrect = view.findViewById(R.id.btn_review_correct);
-        MaterialButton btnReviewWrong = view.findViewById(R.id.btn_review_wrong);
 
+        // Listeners
+        btnReveal.setOnClickListener(v -> revealAnswer(view));
         btnEdit.setOnClickListener(v -> showEditDialog());
         btnDelete.setOnClickListener(v -> confirmDelete());
-        btnReviewCorrect.setOnClickListener(v -> recordQuickReview(true));
-        btnReviewWrong.setOnClickListener(v -> recordQuickReview(false));
+        btnReviewCorrect.setOnClickListener(v -> recordReview(true));
+        btnReviewWrong.setOnClickListener(v -> recordReview(false));
 
+        // Quan sát từ vựng
         viewModel.observeVocabulary(vocabularyId).observe(getViewLifecycleOwner(), vocabulary -> {
             currentVocabulary = vocabulary;
             if (vocabulary == null) {
@@ -64,28 +94,88 @@ public class VocabularyDetailFragment extends Fragment {
                 NavHostFragment.findNavController(this).navigateUp();
                 return;
             }
-            bindVocabulary(view, vocabulary);
+            // Chỉ reset về phase QUESTION khi lần đầu load (chưa lật thẻ)
+            if (currentPhase == FlashcardPhase.QUESTION) {
+                bindHeaderInfo(view, vocabulary);
+                showQuestionPhase();
+            } else {
+                // Nếu đã lật thẻ, chỉ cập nhật header (SRS status có thể thay đổi)
+                bindHeaderInfo(view, vocabulary);
+                bindAnswerContent(view, vocabulary);
+            }
         });
     }
 
-    private void bindVocabulary(View view, VocabularyEntity vocabulary) {
+    // ====================== FLASHCARD PHASES ======================
+
+    /**
+     * Phase 1 — Câu hỏi: chỉ hiện từ + phiên âm, ẩn toàn bộ nội dung đáp án
+     */
+    private void showQuestionPhase() {
+        currentPhase = FlashcardPhase.QUESTION;
+        layoutFlashcardQuestion.setVisibility(View.VISIBLE);
+        layoutFlashcardAnswer.setVisibility(View.GONE);
+    }
+
+    /**
+     * Phase 2 — Đáp án: animate lật thẻ, hiện nghĩa + ví dụ + nút chấm điểm
+     */
+    private void revealAnswer(View rootView) {
+        currentPhase = FlashcardPhase.ANSWER;
+
+        // Animate: flip out question card, flip in answer card
+        ObjectAnimator flipOut = ObjectAnimator.ofFloat(layoutFlashcardQuestion, "rotationY", 0f, 90f);
+        flipOut.setDuration(180);
+        flipOut.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                layoutFlashcardQuestion.setVisibility(View.GONE);
+                layoutFlashcardAnswer.setVisibility(View.VISIBLE);
+                layoutFlashcardAnswer.setRotationY(-90f);
+                bindAnswerContent(rootView, currentVocabulary);
+
+                ObjectAnimator flipIn = ObjectAnimator.ofFloat(layoutFlashcardAnswer, "rotationY", -90f, 0f);
+                flipIn.setDuration(200);
+                flipIn.start();
+            }
+        });
+        flipOut.start();
+    }
+
+    // ====================== DATA BINDING ======================
+
+    /** Bind header section (luôn hiện bất kể phase) */
+    private void bindHeaderInfo(View view, VocabularyEntity vocabulary) {
         ((TextView) view.findViewById(R.id.tv_word)).setText(vocabulary.getWord());
         ((TextView) view.findViewById(R.id.tv_source)).setText(formatSource(vocabulary.getSourceType()));
         ((TextView) view.findViewById(R.id.tv_phonetic)).setText(
-                isBlank(vocabulary.getPhonetic()) ? "/.../" : vocabulary.getPhonetic());
-        ((TextView) view.findViewById(R.id.tv_meaning)).setText(vocabulary.getMeaning());
+                isBlank(vocabulary.getPhonetic()) ? "/.../": vocabulary.getPhonetic());
         ((ProgressBar) view.findViewById(R.id.progress_mastery)).setProgress(
                 vocabulary.isMastered() ? 100 : Math.min(100, vocabulary.getMasteryLevel() * 20));
+        ((TextView) view.findViewById(R.id.tv_srs_status)).setText(buildSrsStatus(vocabulary));
+        ((TextView) view.findViewById(R.id.tv_meta)).setText(
+                "Tạo: " + dateFormat.format(new Date(vocabulary.getCreatedAt()))
+                        + "\nCập nhật: " + dateFormat.format(new Date(vocabulary.getUpdatedAt())));
+    }
 
+    /** Bind nội dung phase 2 (nghĩa, ví dụ, ghi chú) */
+    private void bindAnswerContent(View view, VocabularyEntity vocabulary) {
+        ((TextView) view.findViewById(R.id.tv_meaning)).setText(vocabulary.getMeaning());
         bindOptionalSection(view.findViewById(R.id.layout_example),
                 view.findViewById(R.id.tv_example), vocabulary.getExampleSentence());
         bindOptionalSection(view.findViewById(R.id.layout_note),
                 view.findViewById(R.id.tv_note), vocabulary.getNote());
 
-        ((TextView) view.findViewById(R.id.tv_srs_status)).setText(buildSrsStatus(vocabulary));
-        ((TextView) view.findViewById(R.id.tv_meta)).setText(
-                "Tạo: " + dateFormat.format(new Date(vocabulary.getCreatedAt()))
-                        + "\nCập nhật: " + dateFormat.format(new Date(vocabulary.getUpdatedAt())));
+        // Cập nhật trạng thái nút sau khi đã review trong phiên này
+        if (hasReviewedThisSession) {
+            btnReviewCorrect.setText("✅  Đã nhớ! (đã ghi nhận)");
+            btnReviewCorrect.setEnabled(false);
+            btnReviewWrong.setEnabled(false);
+        } else {
+            btnReviewCorrect.setText("✅  Đã nhớ!");
+            btnReviewCorrect.setEnabled(true);
+            btnReviewWrong.setEnabled(true);
+        }
     }
 
     private void bindOptionalSection(View section, TextView textView, String value) {
@@ -94,16 +184,33 @@ public class VocabularyDetailFragment extends Fragment {
         if (visible) textView.setText(value);
     }
 
-    private String buildSrsStatus(VocabularyEntity vocabulary) {
-        if (vocabulary.isMastered()) {
-            return "Đã thuộc • Level " + vocabulary.getMasteryLevel();
+    // ====================== SRS REVIEW ======================
+
+    /**
+     * Ghi nhận kết quả ôn tập và cập nhật SRS.
+     * Sau khi user chấm điểm, disable nút để tránh chấm 2 lần trong cùng 1 phiên.
+     */
+    private void recordReview(boolean isCorrect) {
+        if (currentVocabulary == null || hasReviewedThisSession) return;
+        hasReviewedThisSession = true;
+        viewModel.recordReview(currentVocabulary, isCorrect);
+
+        String message = isCorrect
+                ? "🎉 Tuyệt! Lịch ôn sẽ được lùi ra xa hơn."
+                : "💪 Không sao! Từ này sẽ xuất hiện sớm hơn để ôn lại.";
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+
+        // Disable nút, đổi màu để phản hồi
+        btnReviewCorrect.setEnabled(false);
+        btnReviewWrong.setEnabled(false);
+        if (isCorrect) {
+            btnReviewCorrect.setText("✅  Đã ghi nhận — Nhớ tốt!");
+        } else {
+            btnReviewWrong.setText("💪  Đã ghi nhận — Sẽ ôn lại!");
         }
-        long nextReviewDate = vocabulary.getNextReviewDate();
-        String reviewText = nextReviewDate <= 0L || nextReviewDate <= System.currentTimeMillis()
-                ? "Cần ôn hôm nay"
-                : "Ôn tiếp: " + dateFormat.format(new Date(nextReviewDate));
-        return reviewText + " • Level " + vocabulary.getMasteryLevel();
     }
+
+    // ====================== EDIT / DELETE ======================
 
     private void showEditDialog() {
         if (currentVocabulary == null) return;
@@ -171,12 +278,21 @@ public class VocabularyDetailFragment extends Fragment {
                 .show();
     }
 
-    private void recordQuickReview(boolean isCorrect) {
-        if (currentVocabulary == null) return;
-        viewModel.recordReview(currentVocabulary, isCorrect);
-        Toast.makeText(requireContext(),
-                isCorrect ? "Đã tăng tiến độ ôn tập" : "Đã lùi lịch ôn để luyện lại",
-                Toast.LENGTH_SHORT).show();
+    // ====================== HELPERS ======================
+
+    private String buildSrsStatus(VocabularyEntity vocabulary) {
+        if (vocabulary.isMastered()) {
+            return "✅ Đã thuộc • Level " + vocabulary.getMasteryLevel();
+        }
+        // Từ mới: chưa học lần nào
+        if (vocabulary.getMasteryLevel() == 0 && vocabulary.getNextReviewDate() == 0L) {
+            return "🆕 Từ mới — chưa học lần nào";
+        }
+        long nextReviewDate = vocabulary.getNextReviewDate();
+        String reviewText = nextReviewDate <= 0L || nextReviewDate <= System.currentTimeMillis()
+                ? "🔥 Cần ôn hôm nay"
+                : "📅 Ôn tiếp: " + dateFormat.format(new Date(nextReviewDate));
+        return reviewText + " • Level " + vocabulary.getMasteryLevel();
     }
 
     private String formatSource(String sourceType) {
