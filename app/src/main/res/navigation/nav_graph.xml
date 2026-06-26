@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_splash">
+
+    <!-- Bottom Nav Tabs -->
+    <fragment
+        android:id="@+id/nav_dashboard"
+        android:name="com.example.englishapp.feature.dashboard.DashboardFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_dashboard" />
+
+    <fragment
+        android:id="@+id/nav_scan"
+        android:name="com.example.englishapp.feature.scan.presentation.ScanFragment"
+        android:label="Scan"
+        tools:layout="@layout/fragment_placeholder" />
+
+    <fragment
+        android:id="@+id/nav_vocabulary"
+        android:name="com.example.englishapp.feature.vocabulary.VocabularyFragment"
+        android:label="Vocabulary"
+        tools:layout="@layout/fragment_vocabulary" />
+
+    <fragment
+        android:id="@+id/nav_story"
+        android:name="com.example.englishapp.feature.story.presentation.StoryHomeFragment"
+        android:label="Story"
+        tools:layout="@layout/fragment_story_home" />
+
+    <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.example.englishapp.feature.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_placeholder" />
+
+    <!-- Sub Screens -->
+    <fragment
+        android:id="@+id/nav_splash"
+        android:name="com.example.englishapp.feature.splash.SplashFragment"
+        android:label="Splash" />
+
+    <fragment
+        android:id="@+id/nav_login"
+        android:name="com.example.englishapp.feature.auth.LoginFragment"
+        android:label="Login" />
+
+    <fragment
+        android:id="@+id/nav_vocabulary_detail"
+        android:name="com.example.englishapp.feature.vocabulary.VocabularyDetailFragment"
+        android:label="Vocabulary Detail"
+        tools:layout="@layout/fragment_vocabulary_detail">
+        <argument
+            android:name="vocabularyId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_flashcard_session"
+        android:name="com.example.englishapp.feature.vocabulary.FlashcardSessionFragment"
+        android:label="Flashcard Session"
+        tools:layout="@layout/fragment_flashcard_session" />
+
+    <fragment
+        android:id="@+id/nav_flashcard_result"
+        android:name="com.example.englishapp.feature.vocabulary.FlashcardResultFragment"
+        android:label="Flashcard Result"
+        tools:layout="@layout/fragment_flashcard_result" />
+
+    <fragment
+        android:id="@+id/nav_quiz_config"
+        android:name="com.example.englishapp.feature.quiz.QuizConfigFragment"
+        android:label="Quiz Config" />
+
+    <fragment
+        android:id="@+id/nav_quiz_session"
+        android:name="com.example.englishapp.feature.quiz.QuizSessionFragment"
+        android:label="Quiz Session" />
+
+    <fragment
+        android:id="@+id/nav_quiz_result"
+        android:name="com.example.englishapp.feature.quiz.QuizResultFragment"
+        android:label="Quiz Result" />
+
+    <fragment
+        android:id="@+id/nav_story_word_selection"
+        android:name="com.example.englishapp.feature.story.presentation.StoryWordSelectionFragment"
+        android:label="Story Word Selection" />
+
+    <fragment
+        android:id="@+id/nav_story_session"
+        android:name="com.example.englishapp.feature.story.presentation.StorySessionFragment"
+        android:label="Story Session" />
+
+    <fragment
+        android:id="@+id/nav_story_result"
+        android:name="com.example.englishapp.feature.story.presentation.StoryResultFragment"
+        android:label="Story Result" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.example.englishapp.feature.settings.SettingsFragment"
+        android:label="Settings" />
+
+    <fragment
+        android:id="@+id/nav_leaderboard"
+        android:name="com.example.englishapp.feature.leaderboard.LeaderboardFragment"
+        android:label="Leaderboard" />
+</navigation>

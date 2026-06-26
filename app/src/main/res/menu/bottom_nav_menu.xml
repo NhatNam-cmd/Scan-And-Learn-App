@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_dashboard"
+        android:icon="@android:drawable/ic_menu_today"
+        android:title="Home" />
+    <item
+        android:id="@+id/nav_vocabulary"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Vocabulary" />
+    <item
+        android:id="@+id/nav_scan"
+        android:icon="@android:drawable/ic_menu_camera"
+        android:title="Scan" />
+    <item
+        android:id="@+id/nav_story"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="Story" />
+    <item
+        android:id="@+id/nav_profile"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Profile" />
+</menu>

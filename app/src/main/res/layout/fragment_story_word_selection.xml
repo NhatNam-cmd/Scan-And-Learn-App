@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_background"
+    android:orientation="vertical">
+
+    <!-- Header Card -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_story_header"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="28dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="✨ Chọn từ vựng"
+            android:textColor="#FFFFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Chọn 5 – 10 từ để AI tạo câu chuyện"
+            android:textColor="#CCFFFFFF"
+            android:textSize="14sp" />
+
+        <!-- Progress row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_selection_counter"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0 / 10 từ đã chọn"
+                android:textColor="#FFFFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <!-- Step dots -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/dot_1"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_progress_dot_inactive" />
+
+                <View
+                    android:id="@+id/dot_2"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_progress_dot_inactive" />
+
+                <View
+                    android:id="@+id/dot_3"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_progress_dot_inactive" />
+
+                <View
+                    android:id="@+id/dot_4"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_progress_dot_inactive" />
+
+                <View
+                    android:id="@+id/dot_5"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_progress_dot_inactive" />
+
+                <View
+                    android:id="@+id/dot_6"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_progress_dot_inactive" />
+
+                <View
+                    android:id="@+id/dot_7"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_progress_dot_inactive" />
+
+                <View
+                    android:id="@+id/dot_8"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_progress_dot_inactive" />
+
+                <View
+                    android:id="@+id/dot_9"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_progress_dot_inactive" />
+
+                <View
+                    android:id="@+id/dot_10"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@drawable/bg_progress_dot_inactive" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Word list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_words"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp" />
+
+    <!-- Empty state – beautiful illustrated design -->
+    <LinearLayout
+        android:id="@+id/layout_empty_words"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <!-- Gradient circle with big emoji -->
+        <FrameLayout
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:background="@drawable/bg_empty_state_circle">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="🎉"
+                android:textSize="56sp" />
+        </FrameLayout>
+
+        <!-- Main heading -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:text="Bạn đã ôn tập hết từ vựng!"
+            android:textColor="@color/light_primary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <!-- Sub-description -->
+        <TextView
+            android:id="@+id/tv_empty_words"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.5"
+            android:text="Tuyệt vời! Bạn đã thuộc tất cả từ vựng.&#10;Hãy đi quét thêm sách để học từ mới nhé!"
+            android:textColor="#FF6B7280"
+            android:textSize="15sp" />
+
+        <!-- Scan CTA button -->
+        <Button
+            android:id="@+id/btn_go_scan"
+            android:layout_width="wrap_content"
+            android:layout_height="52dp"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_story_button_primary"
+            android:paddingHorizontal="32dp"
+            android:stateListAnimator="@null"
+            android:text="📷 Quét sách ngay"
+            android:textAllCaps="false"
+            android:textColor="@color/light_on_primary"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <!-- Decorative dots -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_progress_dot_active" />
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_progress_dot_active" />
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_progress_dot_active" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Bottom panel: Progress bar + Button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/light_surface"
+        android:elevation="8dp"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:paddingBottom="20dp">
+
+        <!-- Loading indicator -->
+        <ProgressBar
+            android:id="@+id/progress_story_generation"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginBottom="12dp"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/light_primary"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btn_start_story"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:background="@drawable/bg_story_button_primary"
+            android:enabled="false"
+            android:alpha="0.45"
+            android:stateListAnimator="@null"
+            android:text="Chọn ít nhất 5 từ"
+            android:textAllCaps="false"
+            android:textColor="@color/light_on_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

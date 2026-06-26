@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    android:background="@android:color/white"
+    android:padding="24dp">
+
+    <EditText
+        android:id="@+id/et_word"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:backgroundTint="?colorPrimary"
+        android:hint="Từ vựng"
+        android:inputType="textNoSuggestions"
+        android:textColor="@android:color/black"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/btn_refresh_word"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btn_refresh_word"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Tra lại từ"
+        android:src="@android:drawable/ic_popup_sync"
+        app:layout_constraintBottom_toBottomOf="@id/et_word"
+        app:layout_constraintEnd_toStartOf="@id/btn_play_audio"
+        app:layout_constraintTop_toTopOf="@id/et_word" />
+
+    <ImageButton
+        android:id="@+id/btn_play_audio"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Phát âm"
+        android:src="@android:drawable/ic_media_play"
+        app:layout_constraintBottom_toBottomOf="@id/et_word"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/et_word" />
+
+    <TextView
+        android:id="@+id/tv_phonetic"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="/.../"
+        android:textColor="#757575"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_word" />
+
+    <EditText
+        android:id="@+id/et_meaning"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="?colorPrimary"
+        android:gravity="top|start"
+        android:hint="Nhập nghĩa của từ..."
+        android:minLines="2"
+        android:textColor="@android:color/black"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_phonetic" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_cancel_vocab"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="8dp"
+        android:text="Hủy"
+        app:layout_constraintEnd_toStartOf="@id/btn_save_vocab"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_meaning" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_save_vocab"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="Lưu từ vựng"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/btn_cancel_vocab"
+        app:layout_constraintTop_toBottomOf="@id/et_meaning" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
