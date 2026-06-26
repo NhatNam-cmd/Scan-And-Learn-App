@@ -5,8 +5,10 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewConfiguration;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -132,9 +134,47 @@ public class FlashcardSessionFragment extends Fragment {
 
         // Flip ngược lại về mặt trước: click vào thẻ sau
         cardBack.setOnClickListener(v -> flipToFront());
+        setupBackCardTapToFlip();
 
         btnRemembered.setOnClickListener(v -> submitAnswer(true));
         btnForgot.setOnClickListener(v -> submitAnswer(false));
+    }
+
+    private void setupBackCardTapToFlip() {
+        final int touchSlop = ViewConfiguration.get(requireContext()).getScaledTouchSlop();
+        cardBack.setOnTouchListener(new View.OnTouchListener() {
+            private float downX;
+            private float downY;
+            private boolean moved;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        downX = event.getX();
+                        downY = event.getY();
+                        moved = false;
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (Math.abs(event.getX() - downX) > touchSlop
+                                || Math.abs(event.getY() - downY) > touchSlop) {
+                            moved = true;
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        if (!moved) {
+                            v.performClick();
+                        }
+                        break;
+                    case MotionEvent.ACTION_CANCEL:
+                        moved = true;
+                        break;
+                    default:
+                        break;
+                }
+                return false;
+            }
+        });
     }
 
     private void initSession() {
