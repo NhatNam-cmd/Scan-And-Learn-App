@@ -4,8 +4,10 @@ import androidx.lifecycle.LiveData;
 
 import com.example.englishapp.core.ai.GeminiService;
 import com.example.englishapp.core.ai.StoryFallbackBuilder;
+import com.example.englishapp.core.database.dao.ReviewHistoryDao;
 import com.example.englishapp.core.database.dao.VocabularyDao;
 import com.example.englishapp.core.database.entity.VocabularyEntity;
+import com.example.englishapp.core.srs.SrsEngine;
 import com.example.englishapp.feature.story.domain.StoryBlank;
 import com.example.englishapp.feature.story.domain.StoryGameData;
 
@@ -18,12 +20,17 @@ import javax.inject.Inject;
 
 public class StoryRepositoryImpl implements StoryRepository {
     private final VocabularyDao vocabularyDao;
+    private final ReviewHistoryDao reviewHistoryDao;
+    private final SrsEngine srsEngine;
     private final GeminiService geminiService;
     private final StoryFallbackBuilder fallbackBuilder;
 
     @Inject
-    public StoryRepositoryImpl(VocabularyDao vocabularyDao) {
+    public StoryRepositoryImpl(VocabularyDao vocabularyDao, ReviewHistoryDao reviewHistoryDao,
+                               SrsEngine srsEngine) {
         this.vocabularyDao = vocabularyDao;
+        this.reviewHistoryDao = reviewHistoryDao;
+        this.srsEngine = srsEngine;
         this.geminiService = new GeminiService();
         this.fallbackBuilder = new StoryFallbackBuilder();
     }
@@ -51,15 +58,10 @@ public class StoryRepositoryImpl implements StoryRepository {
         for (int i = 0; i < story.getBlanks().size() && i < answers.size(); i++) {
             StoryBlank blank = story.getBlanks().get(i);
             String answer = answers.get(i);
-            if (blank.getWord() != null && blank.getWord().equalsIgnoreCase(answer)) {
-                VocabularyEntity entity = vocabularyDao.getVocabularyById(blank.getVocabularyId());
-                if (entity != null) {
-                    entity.setMasteryLevel(Math.max(1, entity.getMasteryLevel() + 1));
-                    entity.setMastered(entity.getMasteryLevel() >= 5);
-                    entity.setNextReviewDate(System.currentTimeMillis() + 24L * 60L * 60L * 1000L);
-                    entity.setUpdatedAt(System.currentTimeMillis());
-                    vocabularyDao.updateVocabulary(entity);
-                }
+            boolean isCorrect = blank.getWord() != null && blank.getWord().equalsIgnoreCase(answer);
+            VocabularyEntity entity = vocabularyDao.getVocabularyById(blank.getVocabularyId());
+            if (entity != null) {
+                srsEngine.applyReview(entity, isCorrect, vocabularyDao, reviewHistoryDao);
             }
         }
     }

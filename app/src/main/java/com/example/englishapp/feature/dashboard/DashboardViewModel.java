@@ -49,7 +49,7 @@ public class DashboardViewModel extends ViewModel {
             try {
                 int totalWords = database.vocabularyDao().countAllWords();
                 int masteredWords = database.vocabularyDao().countMasteredWords();
-                int dueForReviewCount = database.vocabularyDao().countUnmasteredWords();
+                int dueForReviewCount = database.vocabularyDao().countDueWords(System.currentTimeMillis());
                 int completedQuizzes = database.quizDao().countCompletedQuizzes();
 
                 // Count completed stories from story dao

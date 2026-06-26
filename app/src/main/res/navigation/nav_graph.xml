@@ -22,7 +22,7 @@
         android:id="@+id/nav_vocabulary"
         android:name="com.example.englishapp.feature.vocabulary.VocabularyFragment"
         android:label="Vocabulary"
-        tools:layout="@layout/fragment_placeholder" />
+        tools:layout="@layout/fragment_vocabulary" />
 
     <fragment
         android:id="@+id/nav_story"
@@ -50,7 +50,8 @@
     <fragment
         android:id="@+id/nav_vocabulary_detail"
         android:name="com.example.englishapp.feature.vocabulary.VocabularyDetailFragment"
-        android:label="Vocabulary Detail">
+        android:label="Vocabulary Detail"
+        tools:layout="@layout/fragment_vocabulary_detail">
         <argument
             android:name="vocabularyId"
             app:argType="long" />

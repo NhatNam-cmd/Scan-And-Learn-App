@@ -3,6 +3,7 @@ package com.example.englishapp.core.database.dao;
 import androidx.lifecycle.LiveData;
 import androidx.annotation.Nullable;
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
@@ -25,11 +26,17 @@ public interface VocabularyDao {
     @Nullable
     VocabularyEntity getVocabularyById(long id);
 
+    @Query("SELECT * FROM vocabulary WHERE vocabularyId = :id")
+    LiveData<VocabularyEntity> observeVocabularyById(long id);
+
     @Query("SELECT * FROM vocabulary ORDER BY createdAt DESC")
     LiveData<List<VocabularyEntity>> getAllVocabularies();
 
     @Query("SELECT * FROM vocabulary WHERE nextReviewDate <= :currentDate AND isMastered = 0 ORDER BY nextReviewDate ASC LIMIT :limit")
     List<VocabularyEntity> getDueWords(long currentDate, int limit);
+
+    @Query("SELECT COUNT(*) FROM vocabulary WHERE nextReviewDate <= :currentDate AND isMastered = 0")
+    int countDueWords(long currentDate);
 
     @Query("SELECT * FROM vocabulary WHERE isMastered = 0 ORDER BY masteryLevel ASC, createdAt DESC")
     LiveData<List<VocabularyEntity>> getUnmasteredWords();
@@ -57,6 +64,9 @@ public interface VocabularyDao {
 
     @androidx.room.Update
     void update(VocabularyEntity entity);
+
+    @Delete
+    void delete(VocabularyEntity entity);
 
     /** Counts words added since the given timestamp (epoch ms). Used for daily progress. */
     @Query("SELECT COUNT(*) FROM vocabulary WHERE createdAt >= :sinceMillis")
