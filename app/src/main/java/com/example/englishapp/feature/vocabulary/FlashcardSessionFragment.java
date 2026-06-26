@@ -126,9 +126,12 @@ public class FlashcardSessionFragment extends Fragment {
     private void setupListeners(View view) {
         view.findViewById(R.id.btn_close).setOnClickListener(v -> confirmExit());
 
-        // Flip bằng nút hoặc click trực tiếp vào thẻ
+        // Flip sang mặt sau: nhấn nút HOẶC click trực tiếp vào thẻ trước
         btnFlip.setOnClickListener(v -> flipToBack());
         cardFront.setOnClickListener(v -> flipToBack());
+
+        // Flip ngược lại về mặt trước: click vào thẻ sau
+        cardBack.setOnClickListener(v -> flipToFront());
 
         btnRemembered.setOnClickListener(v -> submitAnswer(true));
         btnForgot.setOnClickListener(v -> submitAnswer(false));
@@ -158,11 +161,20 @@ public class FlashcardSessionFragment extends Fragment {
         viewModel.getSessionState().observe(getViewLifecycleOwner(), state -> {
             if (state == FlashcardSessionViewModel.SessionState.FINISHED) {
                 navigateToResult();
+            } else if (state == FlashcardSessionViewModel.SessionState.ACTIVE) {
+                // BUG FIX: Khi data load xong và state chuyển sang ACTIVE,
+                // currentIndex observer đã fire trước nhưng state lúc đó còn LOADING
+                // → phải trigger showCurrentCard() ở đây mới hiện được thẻ đầu tiên.
+                showCurrentCard();
             }
         });
 
         viewModel.getCurrentIndex().observe(getViewLifecycleOwner(), index -> {
-            if (viewModel.getSessionState().getValue() == FlashcardSessionViewModel.SessionState.ACTIVE) {
+            // Chỉ xử lý khi đang trong phiên ACTIVE (để hiện thẻ tiếp theo khi advance).
+            // Thẻ đầu tiên (index=0) được handle bởi sessionState observer ở trên.
+            FlashcardSessionViewModel.SessionState state = viewModel.getSessionState().getValue();
+            if (state == FlashcardSessionViewModel.SessionState.ACTIVE
+                    && index != null && index > 0) {
                 showCurrentCard();
             }
         });
@@ -210,6 +222,10 @@ public class FlashcardSessionFragment extends Fragment {
 
     // ===== FLIP ANIMATION =====
 
+    /**
+     * Lật sang mặt SAU (hiện nghĩa).
+     * Bị chặn nếu đã đang ở mặt sau.
+     */
     private void flipToBack() {
         if (isShowingBack) return;
         isShowingBack = true;
@@ -220,19 +236,19 @@ public class FlashcardSessionFragment extends Fragment {
         // Điền nội dung mặt sau trước khi animate
         tvBackWord.setText(word.getWord());
         tvBackMeaning.setText(word.getMeaning());
-
         setOptionalField(tvBackExampleLabel, tvBackExample, word.getExampleSentence());
         setOptionalField(tvBackNoteLabel, tvBackNote, word.getNote());
-
         int level = word.isMastered() ? 5 : Math.min(5, word.getMasteryLevel());
         tvBackMastery.setText("Level " + level + " / 5");
 
-        // Animate: flip front out, flip back in
+        // Animate: front quay ra 90° → ẩn → back quay vào từ -90°
         ObjectAnimator flipOut = ObjectAnimator.ofFloat(cardFront, "rotationY", 0f, 90f);
         flipOut.setDuration(200);
         flipOut.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(android.animation.Animator animation) {
+                // Reset rotation của front để lần sau flip về lại đúng
+                cardFront.setRotationY(0f);
                 cardFront.setVisibility(View.GONE);
                 cardBack.setVisibility(View.VISIBLE);
                 cardBack.setRotationY(-90f);
@@ -249,6 +265,40 @@ public class FlashcardSessionFragment extends Fragment {
         layoutActionButtons.setVisibility(View.VISIBLE);
         layoutActionButtons.setAlpha(0f);
         layoutActionButtons.animate().alpha(1f).setStartDelay(300).setDuration(200).start();
+    }
+
+    /**
+     * Lật ngược về mặt TRƯỚC (để xem lại từ).
+     * Khi ở mặt sau, user có thể click vào thẻ để xem lại từ trước khi chấm điểm.
+     */
+    private void flipToFront() {
+        if (!isShowingBack) return;
+        isShowingBack = false;
+
+        // Animate: back quay ra 90° → ẩn → front quay vào từ -90°
+        ObjectAnimator flipOut = ObjectAnimator.ofFloat(cardBack, "rotationY", 0f, -90f);
+        flipOut.setDuration(200);
+        flipOut.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                // Reset rotation của back để lần sau flip sang lại đúng
+                cardBack.setRotationY(0f);
+                cardBack.setVisibility(View.GONE);
+                cardFront.setVisibility(View.VISIBLE);
+                cardFront.setRotationY(90f);
+
+                ObjectAnimator flipIn = ObjectAnimator.ofFloat(cardFront, "rotationY", 90f, 0f);
+                flipIn.setDuration(220);
+                flipIn.start();
+            }
+        });
+        flipOut.start();
+
+        // Hiện lại nút flip, ẩn nút chấm điểm
+        layoutActionButtons.setVisibility(View.GONE);
+        btnFlip.setVisibility(View.VISIBLE);
+        btnFlip.setAlpha(0f);
+        btnFlip.animate().alpha(1f).setStartDelay(300).setDuration(200).start();
     }
 
     // ===== SUBMIT ANSWER =====
