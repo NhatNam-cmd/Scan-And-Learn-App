@@ -1,5 +1,7 @@
 package com.example.englishapp.feature.scan.data.repository;
 
+import android.util.Log;
+
 import androidx.lifecycle.MutableLiveData;
 import com.example.englishapp.core.common.ApiResult;
 import com.example.englishapp.core.common.ExecutorProvider;
@@ -35,6 +37,7 @@ public class ScanRepositoryImpl implements ScanRepository {
 
         executorProvider.getIoExecutor().execute(() -> {
             try {
+                Log.d("LOOKUP", "Word = [" + word + "]");
                 Response<List<DictionaryWordDto>> response = dictionaryService.getWordData(word.trim().toLowerCase()).execute();
 
                 if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {

@@ -1,15 +1,11 @@
 package com.example.englishapp.feature.scan.presentation;
-import com.google.mlkit.vision.text.Text;
+
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -17,11 +13,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -29,257 +23,648 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.mlkit.vision.text.Text;
 import com.example.englishapp.R;
-import com.example.englishapp.core.model.VocabularyLookup;
 import com.example.englishapp.core.service.OcrManager;
-import com.example.englishapp.core.common.ApiResult;
-import com.example.englishapp.core.database.entity.VocabularyEntity;
+import com.example.englishapp.feature.scan.processor.ScanImageProcessor;
+import com.example.englishapp.feature.scan.ui.ScanWordPickerBottomSheet;
 import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.nio.ByteBuffer;
+import androidx.camera.core.ImageProxy;
 import java.util.concurrent.ExecutionException;
 
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
+import android.graphics.Bitmap;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 
+import com.example.englishapp.feature.scan.model.ScanWordItem;
+import com.example.englishapp.feature.scan.model.WordCandidate;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.example.englishapp.core.common.ApiResult;
+import com.example.englishapp.core.model.VocabularyLookup;
 @AndroidEntryPoint
-public class ScanFragment extends Fragment {
-
-    private ScanViewModel viewModel;
-    private PreviewView previewView;
-    private MaterialButton captureButton;
-    private ProgressBar progressBar;
-    private View loadingOverlay;
-    private ImageCapture imageCapture;
-
-    private VocabularyEntity pendingVocabulary;
+public class ScanFragment extends Fragment
+        implements ScanWordPickerBottomSheet.OnWordSelectedListener {
 
     @Inject
-    public OcrManager ocrManager;
+    OcrManager ocrManager;
 
-    private final ActivityResultLauncher<String> requestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                if (isGranted) {
-                    startCamera();
-                } else {
-                    Toast.makeText(requireContext(), "Cần cấp quyền Camera để sử dụng tính năng này", Toast.LENGTH_SHORT).show();
-                }
-            });
+    //==============================
+    // ViewModel
+    //==============================
+
+    private ScanViewModel viewModel;
+
+    //==============================
+    // Views
+    //==============================
+
+    private PreviewView previewView;
+
+    private MaterialButton captureButton;
+
+    private ProgressBar progressBar;
+
+    private View loadingOverlay;
+
+    //==============================
+    // CameraX
+    //==============================
+
+    private ImageCapture imageCapture;
+
+    private ProcessCameraProvider cameraProvider;
+
+    //==============================
+    // Processor
+    //==============================
+
+    private final ScanImageProcessor imageProcessor =
+            new ScanImageProcessor();
+
+    //==============================
+    // Permission Launcher
+    //==============================
+
+    private final ActivityResultLauncher<String> requestCameraPermission =
+            registerForActivityResult(
+                    new ActivityResultContracts.RequestPermission(),
+                    granted -> {
+
+                        if (granted) {
+
+                            startCamera();
+
+                        } else {
+
+                            Toast.makeText(
+                                    requireContext(),
+                                    "Camera permission denied",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+
+                        }
+
+                    });
+
+    //==========================================================
+    // Lifecycle
+    //==========================================================
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_scan, container, false);
+    public View onCreateView(
+            @NonNull LayoutInflater inflater,
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState
+    ) {
+
+        return inflater.inflate(
+                R.layout.fragment_scan,
+                container,
+                false
+        );
+
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(
+            @NonNull View view,
+            @Nullable Bundle savedInstanceState
+    ) {
+
         super.onViewCreated(view, savedInstanceState);
-        viewModel = new ViewModelProvider(this).get(ScanViewModel.class);
+
+        viewModel = new ViewModelProvider(this)
+                .get(ScanViewModel.class);
+
+        initViews(view);
+
+        setupClickListeners();
+        observeViewModel();
+        checkCameraPermission();
+
+    }
+
+    //==========================================================
+    // Init
+    //==========================================================
+
+    private void initViews(View view) {
 
         previewView = view.findViewById(R.id.preview_view);
+
         captureButton = view.findViewById(R.id.captureButton);
+
         progressBar = view.findViewById(R.id.progressBar);
+
         loadingOverlay = view.findViewById(R.id.loading_overlay);
 
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+    }
+
+    private void setupClickListeners() {
+
+        captureButton.setOnClickListener(v -> captureImage());
+
+    }
+
+    //==========================================================
+    // Permission
+    //==========================================================
+
+    private void checkCameraPermission() {
+
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED) {
+
             startCamera();
+
         } else {
-            requestPermissionLauncher.launch(Manifest.permission.CAMERA);
+
+            requestCameraPermission.launch(
+                    Manifest.permission.CAMERA
+            );
+
         }
 
-        captureButton.setOnClickListener(v -> takePhoto());
-
-        setupObservers();
     }
+
+    //==========================================================
+    // Camera
+    //==========================================================
 
     private void startCamera() {
-        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
 
-        cameraProviderFuture.addListener(() -> {
+        ListenableFuture<ProcessCameraProvider> future =
+                ProcessCameraProvider.getInstance(requireContext());
+
+        future.addListener(() -> {
+
             try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                Preview preview = new Preview.Builder().build();
-                preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-                imageCapture = new ImageCapture.Builder().build();
-                CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+                cameraProvider = future.get();
 
-                cameraProvider.unbindAll();
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
+                bindCameraUseCases();
 
             } catch (ExecutionException | InterruptedException e) {
-                Toast.makeText(requireContext(), "Lỗi khởi tạo Camera", Toast.LENGTH_SHORT).show();
+
+                Toast.makeText(
+                        requireContext(),
+                        "Unable to start camera",
+                        Toast.LENGTH_SHORT
+                ).show();
+
             }
+
         }, ContextCompat.getMainExecutor(requireContext()));
+
     }
 
-    private void takePhoto() {
-        if (imageCapture == null) return;
+    private void bindCameraUseCases() {
 
-        loadingOverlay.setVisibility(View.VISIBLE);
-        captureButton.setEnabled(false);
+        Preview preview =
+                new Preview.Builder()
+                        .build();
 
-        imageCapture.takePicture(ContextCompat.getMainExecutor(requireContext()), new ImageCapture.OnImageCapturedCallback() {
-            @Override
-            public void onCaptureSuccess(@NonNull ImageProxy image) {
-                Bitmap bitmap = imageProxyToBitmap(image);
-                image.close();
-                processImageWithOcr(bitmap);
-            }
+        preview.setSurfaceProvider(
+                previewView.getSurfaceProvider()
+        );
 
-            @Override
-            public void onError(@NonNull ImageCaptureException exception) {
-                loadingOverlay.setVisibility(View.GONE);
-                captureButton.setEnabled(true);
-                Toast.makeText(requireContext(), "Lỗi chụp ảnh: " + exception.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
+        imageCapture =
+                new ImageCapture.Builder()
+                        .setCaptureMode(
+                                ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
+                        )
+                        .build();
 
-    private Bitmap imageProxyToBitmap(ImageProxy image) {
-        ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-        byte[] bytes = new byte[buffer.remaining()];
-        buffer.get(bytes);
-        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        CameraSelector selector =
+                CameraSelector.DEFAULT_BACK_CAMERA;
 
-        Matrix matrix = new Matrix();
-        matrix.postRotate(image.getImageInfo().getRotationDegrees());
-        // FIX LỖI: Sửa bitmap.Height() thành bitmap.getHeight()
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-    }
-
-    private void processImageWithOcr(Bitmap bitmap) {
-        ocrManager.recognizeText(bitmap, new OcrManager.OcrCallback() {
-            @Override
-            public void onSuccess(Text visionText) {
-                loadingOverlay.setVisibility(View.GONE);
-                captureButton.setEnabled(true);
-
-                showTextSelectionDialog(visionText.getText());
-            }
-
-            @Override
-            public void onSuccess(String text) {
-                if (text != null && !text.trim().isEmpty()) {
-                    viewModel.lookupScannedWord(text.trim());
-                } else {
-                    loadingOverlay.setVisibility(View.GONE);
-                    captureButton.setEnabled(true);
-                    Toast.makeText(requireContext(), "Không tìm thấy văn bản trong ảnh", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    loadingOverlay.setVisibility(View.GONE);
-                    captureButton.setEnabled(true);
-                    Toast.makeText(requireContext(), "Lỗi nhận diện văn bản", Toast.LENGTH_SHORT).show();
-                }
-            });
+        cameraProvider.unbindAll();
+        try {
+        cameraProvider.bindToLifecycle(
+                getViewLifecycleOwner(),
+                selector,
+                preview,
+                imageCapture
+        );
         }
 
-    private void setupObservers() {
-        viewModel.lookupResult.observe(getViewLifecycleOwner(), result -> {
-            if (result.getClass() == ApiResult.Loading.class) {
-                loadingOverlay.setVisibility(View.VISIBLE);
-            } else if (result instanceof ApiResult.Success) {
-                loadingOverlay.setVisibility(View.GONE);
-                captureButton.setEnabled(true);
+        catch (Exception e) {
 
-                ApiResult.Success<VocabularyLookup> successResult = (ApiResult.Success<VocabularyLookup>) result;
-                if (successResult.getData() != null) {
-                    WordPreviewDialog dialog = WordPreviewDialog.newInstance(successResult.getData());
-                    dialog.show(getChildFragmentManager(), "WordPreviewDialog");
-                } else {
-                    Toast.makeText(requireContext(), "Không lấy được dữ liệu từ vựng", Toast.LENGTH_SHORT).show();
-                }
-                viewModel.resetLookupState();
-            }
+            Toast.makeText(
+                    requireContext(),
+                    "Camera binding failed",
+                    Toast.LENGTH_SHORT
+            ).show();
 
-             else if (result instanceof ApiResult.Error) {
-                loadingOverlay.setVisibility(View.GONE);
-                captureButton.setEnabled(true);
-                Toast.makeText(requireContext(), ((ApiResult.Error<?>) result).getMessage(), Toast.LENGTH_LONG).show();
-                viewModel.resetLookupState();
-            }
-        });
+        }
 
-        viewModel.saveResult.observe(getViewLifecycleOwner(), result -> {
-            if (result.getClass() == ApiResult.Loading.class) {
-                loadingOverlay.setVisibility(View.VISIBLE);
-            } else if (result instanceof ApiResult.Success) {
-                loadingOverlay.setVisibility(View.GONE);
-                Toast.makeText(requireContext(), ((ApiResult.Success<String>) result).getData(), Toast.LENGTH_SHORT).show();
-                viewModel.resetSaveState();
-                pendingVocabulary = null;
-            } else if (result instanceof ApiResult.Fallback) {
-                loadingOverlay.setVisibility(View.GONE);
-                showDuplicateChoiceDialog();
-                viewModel.resetSaveState();
-            } else if (result instanceof ApiResult.Error) {
-                loadingOverlay.setVisibility(View.GONE);
-                Toast.makeText(requireContext(), ((ApiResult.Error<?>) result).getMessage(), Toast.LENGTH_SHORT).show();
-                viewModel.resetSaveState();
-            }
-        });
     }
 
-    public void setPendingVocabulary(VocabularyEntity entity) {
-        this.pendingVocabulary = entity;
+    //==========================================================
+    // Helpers
+    //==========================================================
+
+    private void showLoading(boolean show) {
+
+        loadingOverlay.setVisibility(
+                show ? View.VISIBLE : View.GONE
+        );
+
     }
 
-    private void showDuplicateChoiceDialog() {
-        if (pendingVocabulary == null) return;
+    //==========================================================
+    // TODO
+    //==========================================================
 
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Từ vựng đã tồn tại")
-                .setMessage("Từ vựng này đã có trong hệ thống. Bạn muốn cập nhật ngữ cảnh cho từ cũ hay lưu thành một từ mới hoàn toàn?")
-                .setPositiveButton("Cập nhật", (dialog, which) -> {
-                    viewModel.saveScannedVocabulary(pendingVocabulary, true);
-                })
-                .setNegativeButton("Lưu từ mới", (dialog, which) -> {
-                    pendingVocabulary = new VocabularyEntity(
-                            0L,
-                            pendingVocabulary.getTopicId(),
-                            pendingVocabulary.getWord(),
-                            pendingVocabulary.getMeaning(),
-                            pendingVocabulary.getPhonetic(),
-                            pendingVocabulary.getExampleSentence(),
-                            pendingVocabulary.getImagePath(),
-                            pendingVocabulary.getAudioPath(),
-                            null, // FIX LỖI: Biến note truyền vào null
-                            pendingVocabulary.getSourceType(), // Biến sourceType
-                            0,
-                            false,
-                            System.currentTimeMillis(),
-                            System.currentTimeMillis(),
-                            System.currentTimeMillis()
-                    );
-                    viewModel.saveScannedVocabulary(pendingVocabulary, false);
-                })
-                .setNeutralButton("Hủy", (dialog, which) -> dialog.dismiss())
-                .setCancelable(false)
-                .show();
-    }
-    private void showTextSelectionDialog(String rawText) {
-        EditText editText = new EditText(requireContext());
-        editText.setText(rawText);
-        editText.setPadding(32, 32, 32, 32);
+    private void captureImage() {
 
-        new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Chọn từ cần tra")
-                .setMessage("Chỉnh sửa lại văn bản nếu cần:")
-                .setView(editText)
-                .setPositiveButton("Tra từ", (dialog, which) -> {
-                    String selectedText = editText.getText().toString().trim();
-                    if (!selectedText.isEmpty()) {
-                        viewModel.lookupScannedWord(selectedText);
+        if (imageCapture == null) {
+
+            Toast.makeText(
+                    requireContext(),
+                    "Camera chưa sẵn sàng",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        showLoading(true);
+
+        imageCapture.takePicture(
+
+                ContextCompat.getMainExecutor(requireContext()),
+
+                new ImageCapture.OnImageCapturedCallback() {
+
+                    @Override
+                    public void onCaptureSuccess(
+                            @NonNull ImageProxy image
+                    ) {
+
+                        Bitmap bitmap;
+
+                        try {
+
+                            bitmap = imageProxyToBitmap(image);
+
+                        }
+
+                        finally {
+
+                            image.close();
+
+                        }
+
+                        if (bitmap == null) {
+
+                            showLoading(false);
+
+                            Toast.makeText(
+                                    requireContext(),
+                                    "Không thể đọc ảnh",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+
+                            return;
+                        }
+
+                        processOcr(bitmap);
+
                     }
-                })
-                .setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss())
-                .show();
+
+                    @Override
+                    public void onError(
+                            @NonNull ImageCaptureException exception
+                    ) {
+
+                        showLoading(false);
+
+                        Toast.makeText(
+                                requireContext(),
+                                "Không thể chụp ảnh",
+                                Toast.LENGTH_SHORT
+                        ).show();
+
+                    }
+
+                }
+
+        );
+
     }
-}
+    private void processOcr(Bitmap bitmap) {
+
+        ocrManager.recognizeText(
+
+                bitmap,
+
+                new OcrManager.OcrCallback() {
+
+                    @Override
+                    public void onSuccess(Text visionText) {
+
+                        showLoading(false);
+
+                        processDetectedText(
+                                visionText.getText()
+                        );
+
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+
+                        showLoading(false);
+
+                        Toast.makeText(
+                                requireContext(),
+                                "OCR thất bại",
+                                Toast.LENGTH_SHORT
+                        ).show();
+
+                    }
+
+                });
+
+
+    }
+    private void processDetectedText(String rawText) {
+
+        List<ScanWordItem> words =
+                imageProcessor.extractWords(rawText);
+
+        if (words.isEmpty()) {
+
+            Toast.makeText(
+                    requireContext(),
+                    "Không phát hiện từ tiếng Anh",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+
+        }
+
+        List<WordCandidate> candidates =
+                new ArrayList<>();
+
+        int maxFrequency = 1;
+
+        for (ScanWordItem item : words) {
+
+            if (item.getFrequency() > maxFrequency) {
+
+                maxFrequency = item.getFrequency();
+
+            }
+
+        }
+
+        for (ScanWordItem item : words) {
+
+            if (item.isStopWord()) {
+
+                continue;
+
+            }
+
+            float confidence =
+                    (float) item.getFrequency()
+                            / maxFrequency;
+
+            candidates.add(
+
+                    new WordCandidate(
+
+                            item.getWord(),
+
+                            confidence
+
+                    )
+
+            );
+
+        }
+
+        if (candidates.isEmpty()) {
+
+            Toast.makeText(
+                    requireContext(),
+                    "Không tìm thấy từ phù hợp",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+
+        }
+
+        ScanWordPickerBottomSheet sheet =
+                new ScanWordPickerBottomSheet();
+
+        sheet.submitWords(candidates);
+
+        sheet.setOnWordSelectedListener(this);
+
+        sheet.show(
+                getChildFragmentManager(),
+                "ScanWords"
+        );
+
+    }
+    private Bitmap imageProxyToBitmap(ImageProxy image) {
+
+        try {
+
+            ImageProxy.PlaneProxy[] planes =
+                    image.getPlanes();
+
+            ByteBuffer yBuffer =
+                    planes[0].getBuffer();
+
+            ByteBuffer uBuffer =
+                    planes[1].getBuffer();
+
+            ByteBuffer vBuffer =
+                    planes[2].getBuffer();
+
+            int ySize = yBuffer.remaining();
+
+            int uSize = uBuffer.remaining();
+
+            int vSize = vBuffer.remaining();
+
+            byte[] nv21 =
+                    new byte[
+                            ySize +
+                                    uSize +
+                                    vSize
+                            ];
+
+            yBuffer.get(
+                    nv21,
+                    0,
+                    ySize
+            );
+
+            vBuffer.get(
+                    nv21,
+                    ySize,
+                    vSize
+            );
+
+            uBuffer.get(
+                    nv21,
+                    ySize + vSize,
+                    uSize
+            );
+
+            YuvImage yuvImage =
+                    new YuvImage(
+                            nv21,
+                            ImageFormat.NV21,
+                            image.getWidth(),
+                            image.getHeight(),
+                            null
+                    );
+
+            ByteArrayOutputStream out =
+                    new ByteArrayOutputStream();
+
+            yuvImage.compressToJpeg(
+
+                    new Rect(
+                            0,
+                            0,
+                            image.getWidth(),
+                            image.getHeight()
+                    ),
+
+                    100,
+
+                    out
+
+            );
+
+            byte[] bytes =
+                    out.toByteArray();
+
+            return android.graphics.BitmapFactory
+                    .decodeByteArray(
+                            bytes,
+                            0,
+                            bytes.length
+                    );
+
+        }
+
+        catch (Exception e) {
+
+            return null;
+
+        }
+
+    }
+    private void observeViewModel() {
+
+        viewModel.getLookupResult().observe(
+
+                getViewLifecycleOwner(),
+
+                result -> {
+
+                    if (result == null) {
+
+                        return;
+
+                    }
+
+                    if (result instanceof ApiResult.Loading) {
+
+                        showLoading(true);
+
+                        return;
+
+                    }
+
+                    showLoading(false);
+
+                    if (result instanceof ApiResult.Success) {
+
+                        VocabularyLookup lookup =
+
+                                ((ApiResult.Success<VocabularyLookup>) result)
+                                        .getData();
+
+                        if (lookup != null) {
+
+                            WordPreviewDialog
+                                    .newInstance(lookup)
+                                    .show(
+                                            getChildFragmentManager(),
+                                            "PreviewDialog"
+                                    );
+
+                        }
+
+                        viewModel.clearLookupResult();
+
+                        return;
+
+                    }
+
+                    if (result instanceof ApiResult.Error) {
+
+                        Toast.makeText(
+
+                                requireContext(),
+
+                                ((ApiResult.Error<?>) result)
+                                        .getMessage(),
+
+                                Toast.LENGTH_SHORT
+
+                        ).show();
+
+                        viewModel.clearLookupResult();
+
+                    }
+
+                });
+
+    }
+    @Override
+    public void onWordSelected(String word) {
+
+        if (word == null) {
+
+            return;
+
+        }
+
+        word = word.trim();
+
+        if (word.isEmpty()) {
+
+            return;
+
+        }
+
+        viewModel.lookupScannedWord(word);
+
+    }
+    }

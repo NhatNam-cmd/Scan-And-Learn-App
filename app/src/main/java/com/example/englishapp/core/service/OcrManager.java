@@ -17,7 +17,6 @@ public class OcrManager {
 
     public interface OcrCallback {
         void onSuccess(Text visionText);
-        void onSuccess(String text);
         void onError(Exception e);
     }
 
