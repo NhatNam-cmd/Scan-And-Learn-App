@@ -10,7 +10,7 @@
         android:id="@+id/nav_dashboard"
         android:name="com.example.englishapp.feature.dashboard.DashboardFragment"
         android:label="Dashboard"
-        tools:layout="@layout/fragment_placeholder" />
+        tools:layout="@layout/fragment_dashboard" />
 
     <fragment
         android:id="@+id/nav_scan"
@@ -22,7 +22,7 @@
         android:id="@+id/nav_vocabulary"
         android:name="com.example.englishapp.feature.vocabulary.VocabularyFragment"
         android:label="Vocabulary"
-        tools:layout="@layout/fragment_placeholder" />
+        tools:layout="@layout/fragment_vocabulary" />
 
     <fragment
         android:id="@+id/nav_story"
@@ -50,11 +50,24 @@
     <fragment
         android:id="@+id/nav_vocabulary_detail"
         android:name="com.example.englishapp.feature.vocabulary.VocabularyDetailFragment"
-        android:label="Vocabulary Detail">
+        android:label="Vocabulary Detail"
+        tools:layout="@layout/fragment_vocabulary_detail">
         <argument
             android:name="vocabularyId"
             app:argType="long" />
     </fragment>
+
+    <fragment
+        android:id="@+id/nav_flashcard_session"
+        android:name="com.example.englishapp.feature.vocabulary.FlashcardSessionFragment"
+        android:label="Flashcard Session"
+        tools:layout="@layout/fragment_flashcard_session" />
+
+    <fragment
+        android:id="@+id/nav_flashcard_result"
+        android:name="com.example.englishapp.feature.vocabulary.FlashcardResultFragment"
+        android:label="Flashcard Result"
+        tools:layout="@layout/fragment_flashcard_result" />
 
     <fragment
         android:id="@+id/nav_quiz_config"

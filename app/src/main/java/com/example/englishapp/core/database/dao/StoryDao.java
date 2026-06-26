@@ -27,4 +27,7 @@ public interface StoryDao {
 
     @Query("SELECT * FROM story ORDER BY createdAt DESC")
     LiveData<List<StoryEntity>> getAllStories();
+
+    @Query("SELECT COUNT(*) FROM story")
+    int countStories();
 }
