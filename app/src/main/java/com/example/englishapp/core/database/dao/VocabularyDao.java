@@ -57,4 +57,8 @@ public interface VocabularyDao {
 
     @androidx.room.Update
     void update(VocabularyEntity entity);
+
+    /** Counts words added since the given timestamp (epoch ms). Used for daily progress. */
+    @Query("SELECT COUNT(*) FROM vocabulary WHERE createdAt >= :sinceMillis")
+    int countWordsAddedSince(long sinceMillis);
 }
