@@ -72,17 +72,31 @@
     <fragment
         android:id="@+id/nav_quiz_config"
         android:name="com.example.englishapp.feature.quiz.QuizConfigFragment"
-        android:label="Quiz Config" />
+        android:label="Quiz Config"
+        tools:layout="@layout/fragment_quiz_config" />
 
     <fragment
         android:id="@+id/nav_quiz_session"
         android:name="com.example.englishapp.feature.quiz.QuizSessionFragment"
-        android:label="Quiz Session" />
+        android:label="Quiz Session"
+        tools:layout="@layout/fragment_quiz_session">
+        <argument
+            android:name="numQuestions"
+            app:argType="integer" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_quiz_result"
         android:name="com.example.englishapp.feature.quiz.QuizResultFragment"
-        android:label="Quiz Result" />
+        android:label="Quiz Result"
+        tools:layout="@layout/fragment_quiz_result">
+        <argument
+            android:name="score"
+            app:argType="integer" />
+        <argument
+            android:name="totalQuestions"
+            app:argType="integer" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_story_word_selection"

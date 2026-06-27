@@ -33,6 +33,9 @@ public interface VocabularyDao {
     @Query("SELECT * FROM vocabulary ORDER BY createdAt DESC")
     LiveData<List<VocabularyEntity>> getAllVocabularies();
 
+    @Query("SELECT * FROM vocabulary")
+    List<VocabularyEntity> getAllVocabulariesSync();
+
     @Query("SELECT v.* FROM vocabulary v INNER JOIN vocabulary_fts f ON v.vocabularyId = f.rowid WHERE vocabulary_fts MATCH :query ORDER BY v.updatedAt DESC, v.createdAt DESC")
     LiveData<List<VocabularyEntity>> searchVocabularies(String query);
 
