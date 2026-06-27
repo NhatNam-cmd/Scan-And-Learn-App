@@ -13,6 +13,7 @@
         android:orientation="vertical"
         android:padding="24dp">
 
+        <!-- Header Profile -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -53,6 +54,7 @@
                 android:textSize="14sp" />
         </LinearLayout>
 
+        <!-- Thống kê học tập -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -176,6 +178,7 @@
             android:textColor="?colorOnSurface"
             android:textSize="15sp" />
 
+        <!-- Nút Settings -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_settings"
             style="@style/Widget.EnglishApp.Button.Primary"
@@ -185,6 +188,7 @@
             android:text="Cài đặt"
             app:icon="@android:drawable/ic_menu_manage" />
 
+        <!-- Nút Logout -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_logout"
             style="@style/Widget.Material3.Button.OutlinedButton"
@@ -193,5 +197,53 @@
             android:layout_marginTop="10dp"
             android:text="Đăng xuất"
             app:icon="@android:drawable/ic_lock_power_off" />
+
+        <!-- Đồng bộ đám mây -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_surface_panel"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="☁️ Đồng bộ đám mây"
+                android:textColor="?colorOnBackground"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_sync_status_detail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Sẵn sàng đồng bộ"
+                android:textColor="?colorOnSurface"
+                android:textSize="14sp" />
+
+            <ProgressBar
+                android:id="@+id/progress_sync"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:indeterminate="true"
+                android:indeterminateTint="?colorPrimary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sync"
+                style="@style/Widget.EnglishApp.Button.Primary"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="10dp"
+                android:text="☁️ Đồng bộ dữ liệu"
+                android:textAllCaps="false"
+                app:cornerRadius="12dp" />
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

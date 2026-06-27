@@ -90,4 +90,6 @@ public interface VocabularyDao {
     /** Counts words added since the given timestamp (epoch ms). Used for daily progress. */
     @Query("SELECT COUNT(*) FROM vocabulary WHERE createdAt >= :sinceMillis")
     int countWordsAddedSince(long sinceMillis);
+    @Query("SELECT * FROM vocabulary ORDER BY updatedAt DESC")
+    List<VocabularyEntity> getAllVocabulariesSync();
 }

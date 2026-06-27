@@ -21,4 +21,6 @@ public interface ReviewHistoryDao {
 
     @Query("SELECT DISTINCT reviewedAt / 86400000 FROM review_history ORDER BY reviewedAt / 86400000 DESC")
     List<Long> getReviewedDaysDesc();
+    @Query("SELECT * FROM review_history ORDER BY reviewedAt DESC")
+    List<ReviewHistoryEntity> getAllReviewHistorySync();
 }
