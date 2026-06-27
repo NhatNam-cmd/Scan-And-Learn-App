@@ -1,6 +1,6 @@
 package com.example.englishapp.core.network.dictionary;
 
-import com.example.englishapp.core.network.dictionary.dto.DictionaryWordDto;
+import com.example.englishapp.core.network.dictionary.dto.DictionaryResponseDto;
 
 import java.util.List;
 import retrofit2.Call;
@@ -9,5 +9,5 @@ import retrofit2.http.Path;
 
 public interface DictionaryService {
     @GET("api/v2/entries/en/{word}")
-    Call<List<DictionaryWordDto>> getWordData(@Path("word") String word);
+    Call<List<DictionaryResponseDto>> getWordData(@Path("word") String word);
 }

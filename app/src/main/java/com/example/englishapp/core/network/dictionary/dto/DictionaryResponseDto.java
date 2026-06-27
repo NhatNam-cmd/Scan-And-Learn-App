@@ -35,4 +35,9 @@ public class DictionaryResponseDto {
     public void setWord(String word) { this.word = word; }
     public void setPhonetic(String phonetic) { this.phonetic = phonetic; }
     public void setPhonetics(List<PhoneticDto> phonetics) { this.phonetics = phonetics; }
-}
+    public void setMeanings(List<MeaningDto> meanings) {
+
+        this.meanings = meanings;
+
+    }
+}
