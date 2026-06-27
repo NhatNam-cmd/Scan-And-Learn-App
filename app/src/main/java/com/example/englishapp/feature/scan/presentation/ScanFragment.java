@@ -3,6 +3,7 @@ package com.example.englishapp.feature.scan.presentation;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,6 +50,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import android.graphics.BitmapFactory;
 
 import com.example.englishapp.core.common.ApiResult;
 import com.example.englishapp.core.model.VocabularyLookup;
@@ -85,6 +87,7 @@ public class ScanFragment extends Fragment
 
     private ProcessCameraProvider cameraProvider;
 
+    private View scanFrame;
     //==============================
     // Processor
     //==============================
@@ -163,7 +166,8 @@ public class ScanFragment extends Fragment
     private void initViews(View view) {
 
         previewView = view.findViewById(R.id.preview_view);
-
+        scanFrame =
+                view.findViewById(R.id.scan_frame);
         captureButton = view.findViewById(R.id.captureButton);
 
         progressBar = view.findViewById(R.id.progressBar);
@@ -342,8 +346,9 @@ public class ScanFragment extends Fragment
 
                             return;
                         }
-
-                        processOcr(bitmap);
+                        Bitmap cropped =
+                                cropToScanFrame(bitmap);
+                        processOcr(cropped);
 
                     }
 
@@ -490,8 +495,83 @@ public class ScanFragment extends Fragment
 
         try {
 
+            Log.d(
+                    "SCAN_DEBUG",
+                    "========== imageProxyToBitmap =========="
+            );
+
+            Log.d(
+                    "SCAN_DEBUG",
+                    "Format = " + image.getFormat()
+                            + ", Width = " + image.getWidth()
+                            + ", Height = " + image.getHeight()
+            );
+
+            /*
+             * =========================================================
+             * JPEG
+             * =========================================================
+             */
+            if (image.getFormat() == ImageFormat.JPEG) {
+
+                Log.d(
+                        "SCAN_DEBUG",
+                        "Processing JPEG image..."
+                );
+
+                ByteBuffer buffer =
+                        image.getPlanes()[0].getBuffer();
+
+                byte[] bytes =
+                        new byte[buffer.remaining()];
+
+                buffer.get(bytes);
+
+                Log.d(
+                        "SCAN_DEBUG",
+                        "JPEG Size = " + bytes.length
+                );
+
+                Bitmap bitmap =
+                        BitmapFactory.decodeByteArray(
+                                bytes,
+                                0,
+                                bytes.length
+                        );
+
+                Log.d(
+                        "SCAN_DEBUG",
+                        "JPEG Bitmap = " + bitmap
+                );
+
+                return bitmap;
+
+            }
+
+            /*
+             * =========================================================
+             * YUV_420_888
+             * =========================================================
+             */
+
             ImageProxy.PlaneProxy[] planes =
                     image.getPlanes();
+
+            Log.d(
+                    "SCAN_DEBUG",
+                    "Plane count = " + planes.length
+            );
+
+            if (planes.length < 3) {
+
+                Log.e(
+                        "SCAN_DEBUG",
+                        "Image does not contain 3 planes!"
+                );
+
+                return null;
+
+            }
 
             ByteBuffer yBuffer =
                     planes[0].getBuffer();
@@ -502,11 +582,46 @@ public class ScanFragment extends Fragment
             ByteBuffer vBuffer =
                     planes[2].getBuffer();
 
-            int ySize = yBuffer.remaining();
+            Log.d(
+                    "SCAN_DEBUG",
+                    "Y RowStride = "
+                            + planes[0].getRowStride()
+                            + ", PixelStride = "
+                            + planes[0].getPixelStride()
+            );
 
-            int uSize = uBuffer.remaining();
+            Log.d(
+                    "SCAN_DEBUG",
+                    "U RowStride = "
+                            + planes[1].getRowStride()
+                            + ", PixelStride = "
+                            + planes[1].getPixelStride()
+            );
 
-            int vSize = vBuffer.remaining();
+            Log.d(
+                    "SCAN_DEBUG",
+                    "V RowStride = "
+                            + planes[2].getRowStride()
+                            + ", PixelStride = "
+                            + planes[2].getPixelStride()
+            );
+
+            int ySize =
+                    yBuffer.remaining();
+
+            int uSize =
+                    uBuffer.remaining();
+
+            int vSize =
+                    vBuffer.remaining();
+
+            Log.d(
+                    "SCAN_DEBUG",
+                    "Buffer Size -> "
+                            + "Y=" + ySize
+                            + ", U=" + uSize
+                            + ", V=" + vSize
+            );
 
             byte[] nv21 =
                     new byte[
@@ -533,6 +648,12 @@ public class ScanFragment extends Fragment
                     uSize
             );
 
+            Log.d(
+                    "SCAN_DEBUG",
+                    "NV21 array created, size = "
+                            + nv21.length
+            );
+
             YuvImage yuvImage =
                     new YuvImage(
                             nv21,
@@ -545,38 +666,124 @@ public class ScanFragment extends Fragment
             ByteArrayOutputStream out =
                     new ByteArrayOutputStream();
 
-            yuvImage.compressToJpeg(
+            boolean success =
+                    yuvImage.compressToJpeg(
 
-                    new Rect(
-                            0,
-                            0,
-                            image.getWidth(),
-                            image.getHeight()
-                    ),
+                            new Rect(
+                                    0,
+                                    0,
+                                    image.getWidth(),
+                                    image.getHeight()
+                            ),
 
-                    100,
+                            100,
 
-                    out
+                            out
 
+                    );
+
+            Log.d(
+                    "SCAN_DEBUG",
+                    "compressToJpeg = " + success
             );
 
             byte[] bytes =
                     out.toByteArray();
 
-            return android.graphics.BitmapFactory
-                    .decodeByteArray(
+            Log.d(
+                    "SCAN_DEBUG",
+                    "JPEG Size = " + bytes.length
+            );
+
+            Bitmap bitmap =
+                    BitmapFactory.decodeByteArray(
                             bytes,
                             0,
                             bytes.length
                     );
 
-        }
+            Log.d(
+                    "SCAN_DEBUG",
+                    "Bitmap = " + bitmap
+            );
 
+            return bitmap;
+
+        }
         catch (Exception e) {
+
+            Log.e(
+                    "SCAN_DEBUG",
+                    "imageProxyToBitmap Exception",
+                    e
+            );
 
             return null;
 
         }
+
+    }
+    private Bitmap cropToScanFrame(Bitmap bitmap) {
+
+        if (bitmap == null) {
+            return null;
+        }
+
+        int bitmapWidth = bitmap.getWidth();
+        int bitmapHeight = bitmap.getHeight();
+
+        int previewWidth = previewView.getWidth();
+        int previewHeight = previewView.getHeight();
+
+        if (previewWidth == 0 || previewHeight == 0) {
+            return bitmap;
+        }
+
+        float scaleX =
+                (float) bitmapWidth / previewWidth;
+
+        float scaleY =
+                (float) bitmapHeight / previewHeight;
+
+        int left =
+                Math.round(scanFrame.getLeft() * scaleX);
+
+        int top =
+                Math.round(scanFrame.getTop() * scaleY);
+
+        int width =
+                Math.round(scanFrame.getWidth() * scaleX);
+
+        int height =
+                Math.round(scanFrame.getHeight() * scaleY);
+
+        left = Math.max(0, left);
+        top = Math.max(0, top);
+
+        if (left + width > bitmapWidth) {
+            width = bitmapWidth - left;
+        }
+
+        if (top + height > bitmapHeight) {
+            height = bitmapHeight - top;
+        }
+
+        Log.d(
+                "SCAN_DEBUG",
+                "Crop Rect = "
+                        + left + ", "
+                        + top + ", "
+                        + width + ", "
+                        + height
+        );
+
+        return Bitmap.createBitmap(
+                bitmap,
+                left,
+                top,
+                width,
+                height
+        );
 
     }
     private void observeViewModel() {

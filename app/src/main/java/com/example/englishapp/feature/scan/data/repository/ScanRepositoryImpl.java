@@ -1,7 +1,10 @@
 package com.example.englishapp.feature.scan.data.repository;
 
 import android.util.Log;
-
+import com.example.englishapp.core.network.dictionary.dto.DefinitionDto;
+import com.example.englishapp.core.network.dictionary.dto.DictionaryResponseDto;
+import com.example.englishapp.core.network.dictionary.dto.MeaningDto;
+import com.example.englishapp.core.network.dictionary.dto.PhoneticDto;
 import androidx.lifecycle.MutableLiveData;
 import com.example.englishapp.core.common.ApiResult;
 import com.example.englishapp.core.common.ExecutorProvider;
@@ -9,14 +12,13 @@ import com.example.englishapp.core.database.dao.VocabularyDao;
 import com.example.englishapp.core.database.entity.VocabularyEntity;
 import com.example.englishapp.core.database.entity.VocabularyFtsEntity;
 import com.example.englishapp.core.network.dictionary.DictionaryService;
-import com.example.englishapp.core.network.dictionary.dto.DictionaryWordDto;
 import com.example.englishapp.core.model.VocabularyLookup;
 import com.example.englishapp.feature.scan.domain.repository.ScanRepository;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import retrofit2.Response;
-
+import com.example.englishapp.core.network.dictionary.dto.DictionaryResponseDto;
 @Singleton
 public class ScanRepositoryImpl implements ScanRepository {
 
@@ -39,17 +41,111 @@ public class ScanRepositoryImpl implements ScanRepository {
         executorProvider.getIoExecutor().execute(() -> {
             try {
                 Log.d("LOOKUP", "Word = [" + word + "]");
-                Response<List<DictionaryWordDto>> response = dictionaryService.getWordData(word.trim().toLowerCase()).execute();
+                Response<List<DictionaryResponseDto>> response = dictionaryService.getWordData(word.trim().toLowerCase()).execute();
 
                 if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
-                    DictionaryWordDto dto = response.body().get(0);
+                    DictionaryResponseDto dto = response.body().get(0);
 
                     String meaning = "Chưa có định nghĩa";
-                    if (!dto.getMeanings().isEmpty() && !dto.getMeanings().get(0).getDefinitions().isEmpty()) {
-                        meaning = dto.getMeanings().get(0).getDefinitions().get(0).getDefinition();
+
+                    String example = "";
+
+                    String partOfSpeech = "";
+
+                    String phonetic = dto.getPhonetic();
+                    if (phonetic == null) {
+                        phonetic = "";
+                    }
+                    String audioUrl = "";
+
+
+//========================
+// phonetic
+//========================
+
+                    if ((phonetic == null || phonetic.isEmpty())
+                            && dto.getPhonetics() != null
+                            && !dto.getPhonetics().isEmpty()) {
+
+                        phonetic = dto.getPhonetics()
+                                .get(0)
+                                .getText();
+
                     }
 
-                    VocabularyLookup lookup = new VocabularyLookup(dto.getWord(), meaning, dto.getPhonetic());
+
+//========================
+// audio
+//========================
+
+                    if (dto.getPhonetics() != null) {
+
+                        for (PhoneticDto p : dto.getPhonetics()) {
+
+                            if (p.getAudio() != null
+                                    && !p.getAudio().isEmpty()) {
+
+                                audioUrl = p.getAudio();
+
+                                break;
+
+                            }
+
+                        }
+
+                    }
+
+
+//========================
+// meaning
+//========================
+
+                    if (dto.getMeanings() != null
+                            && !dto.getMeanings().isEmpty()) {
+
+                        MeaningDto meaningDto =
+                                dto.getMeanings().get(0);
+
+                        partOfSpeech =
+                                meaningDto.getPartOfSpeech();
+                        if (partOfSpeech == null) {
+                            partOfSpeech = "";
+                        }
+                        if (meaningDto.getDefinitions() != null
+                                && !meaningDto.getDefinitions().isEmpty()) {
+
+                            DefinitionDto definition =
+                                    meaningDto.getDefinitions().get(0);
+
+                            meaning =
+                                    definition.getDefinition();
+
+                            example =
+                                    definition.getExample();
+                            if (example == null) {
+                                example = "";
+                            }
+                        }
+
+                    }
+
+                    VocabularyLookup lookup =
+
+                            new VocabularyLookup(
+
+                                    dto.getWord(),
+
+                                    meaning,
+
+                                    phonetic,
+
+                                    partOfSpeech,
+
+                                    example,
+
+                                    audioUrl
+
+                            );
 
                     executorProvider.postToMainThread(() ->
                             resultLiveData.setValue(ApiResult.Success.create(lookup))

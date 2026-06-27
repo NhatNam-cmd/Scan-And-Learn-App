@@ -1,97 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+
     android:layout_margin="16dp"
-    android:background="@android:color/white"
-    android:padding="24dp">
 
-    <EditText
-        android:id="@+id/et_word"
-        android:layout_width="0dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="8dp">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:backgroundTint="?colorPrimary"
-        android:hint="Từ vựng"
-        android:inputType="textNoSuggestions"
-        android:textColor="@android:color/black"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@id/btn_refresh_word"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:fillViewport="true">
 
-    <ImageButton
-        android:id="@+id/btn_refresh_word"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginEnd="4dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Tra lại từ"
-        android:src="@android:drawable/ic_popup_sync"
-        app:layout_constraintBottom_toBottomOf="@id/et_word"
-        app:layout_constraintEnd_toStartOf="@id/btn_play_audio"
-        app:layout_constraintTop_toTopOf="@id/et_word" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
 
-    <ImageButton
-        android:id="@+id/btn_play_audio"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Phát âm"
-        android:src="@android:drawable/ic_media_play"
-        app:layout_constraintBottom_toBottomOf="@id/et_word"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/et_word" />
+            <!-- Title -->
 
-    <TextView
-        android:id="@+id/tv_phonetic"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="/.../"
-        android:textColor="#757575"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/et_word" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Dictionary Lookup"
+                android:textStyle="bold"
+                android:textSize="22sp"
+                android:textColor="?attr/colorPrimary"/>
 
-    <EditText
-        android:id="@+id/et_meaning"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="?colorPrimary"
-        android:gravity="top|start"
-        android:hint="Nhập nghĩa của từ..."
-        android:minLines="2"
-        android:textColor="@android:color/black"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_phonetic" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="12dp"/>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_cancel_vocab"
-        style="@style/Widget.Material3.Button.OutlinedButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="8dp"
-        android:text="Hủy"
-        app:layout_constraintEnd_toStartOf="@id/btn_save_vocab"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/et_meaning" />
+            <!-- Word -->
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_save_vocab"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Lưu từ vựng"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/btn_cancel_vocab"
-        app:layout_constraintTop_toBottomOf="@id/et_meaning" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Word">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_word"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="24sp"
+                    android:textStyle="bold"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Phonetic -->
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tv_phonetic"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="/.../"
+                    android:textColor="#777777"
+                    android:textSize="16sp"/>
+
+                <ImageButton
+                    android:id="@+id/btn_refresh_word"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_popup_sync"/>
+
+                <ImageButton
+                    android:id="@+id/btn_play_audio"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_media_play"/>
+
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="20dp"/>
+
+            <!-- Meaning -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Meaning"
+                android:textStyle="bold"
+                android:textSize="16sp"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_meaning"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minLines="5"
+                    android:gravity="top"
+                    android:inputType="textMultiLine"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="24dp"/>
+
+            <!-- Save -->
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save_vocab"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Save to Vocabulary"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                android:padding="14dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancel_vocab"
+                style="@style/Widget.Material3.Button.TextButton"
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                android:layout_marginTop="8dp"
+
+                android:text="Cancel"/>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</com.google.android.material.card.MaterialCardView>
