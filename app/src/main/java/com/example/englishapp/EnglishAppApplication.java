@@ -4,6 +4,7 @@ import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
+import android.util.Log;
 
 import com.example.englishapp.core.common.ExecutorProvider;
 import com.example.englishapp.core.database.AppDatabase;
@@ -44,6 +45,15 @@ public class EnglishAppApplication extends Application {
                     userPreferences.getReminderMinute()
             );
         }
+        Log.d(
+                "ReminderApp",
+                "Enabled="
+                        + userPreferences.isReminderEnabled()
+                        + " "
+                        + userPreferences.getReminderHour()
+                        + ":"
+                        + userPreferences.getReminderMinute()
+        );
     }
 
     private void createNotificationChannel() {

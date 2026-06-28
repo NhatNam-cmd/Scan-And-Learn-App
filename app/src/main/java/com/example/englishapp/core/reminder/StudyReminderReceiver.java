@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -21,10 +22,14 @@ public class StudyReminderReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+
+        Log.d("StudyReminder", "Receiver triggered");
+
         showStudyReminderNotification(context);
     }
 
     private void showStudyReminderNotification(Context context) {
+        Log.d("StudyReminder", "Showing notification");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     context,
@@ -54,5 +59,6 @@ public class StudyReminderReceiver extends BroadcastReceiver {
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         notificationManager.notify(NOTIFICATION_ID, builder.build());
+        Log.d("StudyReminder", "Notification sent");
     }
 }
