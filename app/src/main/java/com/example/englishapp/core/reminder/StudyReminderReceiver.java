@@ -1,6 +1,7 @@
 package com.example.englishapp.core.reminder;
 
 import android.Manifest;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -50,15 +52,18 @@ public class StudyReminderReceiver extends BroadcastReceiver {
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentTitle("Đến giờ học rồi!")
                 .setContentText("Hôm nay hãy ôn lại từ vựng trong 15 phút nhé.")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
                 .setContentIntent(openAppPendingIntent);
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        notificationManager.notify(NOTIFICATION_ID, builder.build());
-        Log.d("StudyReminder", "Notification sent");
+        NotificationManager manager =
+                (NotificationManager)
+                        context.getSystemService(Context.NOTIFICATION_SERVICE);
+        Log.d("StudyReminder", "Calling notify()");
+        manager.notify(NOTIFICATION_ID, builder.build());
+        Log.d("StudyReminder", "notify() completed");
     }
 }

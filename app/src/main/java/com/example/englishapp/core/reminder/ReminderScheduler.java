@@ -25,10 +25,9 @@ public class ReminderScheduler {
         PendingIntent pendingIntent = getReminderPendingIntent(context);
 
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, hour);
-        calendar.set(Calendar.MINUTE, minute);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.setTimeInMillis(System.currentTimeMillis() + 5000);
+//        calendar.set(Calendar.SECOND, 0);
+//        calendar.set(Calendar.MILLISECOND, 0);
 
         if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
             calendar.add(Calendar.DAY_OF_YEAR, 1);
@@ -37,26 +36,29 @@ public class ReminderScheduler {
         Log.d("REMINDER", "Hour = " + hour);
         Log.d("REMINDER", "Minute = " + minute);
         Log.d("REMINDER", "Time = " + calendar.getTime());
-        alarmManager.setExactAndAllowWhileIdle(
+        alarmManager.set(
+
                 AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(),
                 pendingIntent
+
         );
     }
 
     public static void cancelReminder(Context context) {
+
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
         if (alarmManager == null) {
             return;
         }
-
+        Log.d(TAG, "cancelReminder()");
         alarmManager.cancel(getReminderPendingIntent(context));
     }
 
     private static PendingIntent getReminderPendingIntent(Context context) {
         Intent intent = new Intent(context, StudyReminderReceiver.class);
-
+        Log.d(TAG, "Create PendingIntent");
         return PendingIntent.getBroadcast(
                 context,
                 REQUEST_CODE_REMINDER,

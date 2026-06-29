@@ -61,7 +61,7 @@ public class EnglishAppApplication extends Application {
             NotificationChannel channel = new NotificationChannel(
                     StudyReminderReceiver.CHANNEL_ID,
                     "Nhắc nhở học tập",
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    NotificationManager.IMPORTANCE_HIGH
             );
             channel.setDescription("Thông báo nhắc bạn học từ vựng mỗi ngày");
 

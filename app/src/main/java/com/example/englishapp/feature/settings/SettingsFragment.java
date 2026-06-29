@@ -11,11 +11,14 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.englishapp.core.datastore.UserPreferences;
 import com.example.englishapp.core.reminder.ReminderScheduler;
+import com.example.englishapp.core.reminder.StudyReminderReceiver;
 import com.example.englishapp.databinding.FragmentSettingsBinding;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
