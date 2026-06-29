@@ -60,4 +60,5 @@ public class MainActivity extends AppCompatActivity {
         }
         return AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
     }
+
 }

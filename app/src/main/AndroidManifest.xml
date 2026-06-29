@@ -11,6 +11,10 @@
         android:name="android.hardware.camera"
         android:required="true" />
 
+    <!-- Study Reminder -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:name=".EnglishAppApplication"
         android:allowBackup="true"
@@ -35,6 +39,19 @@
             </intent-filter>
 
         </activity>
+
+        <receiver
+            android:name=".core.reminder.StudyReminderReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".core.reminder.BootCompletedReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 
