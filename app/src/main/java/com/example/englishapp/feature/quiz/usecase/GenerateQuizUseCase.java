@@ -24,19 +24,36 @@ public class GenerateQuizUseCase {
 
     public List<QuizQuestion> invoke(int numQuestions) {
         List<VocabularyEntity> allVocabs = repository.getAllVocabulariesSync();
-
         if (allVocabs == null || allVocabs.isEmpty()) {
             return new ArrayList<>();
         }
 
-        // Shuffle to randomize target words
-        Collections.shuffle(allVocabs, random);
+        long currentTime = System.currentTimeMillis();
+        List<VocabularyEntity> targetVocabs = repository.getDueWords(currentTime);
+        if (targetVocabs == null) {
+            targetVocabs = new ArrayList<>();
+        }
 
-        int actualNumQuestions = Math.min(numQuestions, allVocabs.size());
+        // If due words are less than requested, fill the gap with other words
+        if (targetVocabs.size() < numQuestions) {
+            List<VocabularyEntity> remainingVocabs = new ArrayList<>(allVocabs);
+            remainingVocabs.removeAll(targetVocabs);
+
+            Collections.shuffle(remainingVocabs, random);
+            int needed = numQuestions - targetVocabs.size();
+            for (int i = 0; i < Math.min(needed, remainingVocabs.size()); i++) {
+                targetVocabs.add(remainingVocabs.get(i));
+            }
+        }
+
+        // Shuffle to randomize target words order
+        Collections.shuffle(targetVocabs, random);
+
+        int actualNumQuestions = Math.min(numQuestions, targetVocabs.size());
         List<QuizQuestion> questions = new ArrayList<>();
 
         for (int i = 0; i < actualNumQuestions; i++) {
-            VocabularyEntity target = allVocabs.get(i);
+            VocabularyEntity target = targetVocabs.get(i);
 
             // 50% chance to be Word->Meaning or Meaning->Word
             boolean isMeaningToWord = random.nextBoolean();
