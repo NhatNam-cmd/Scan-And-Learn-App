@@ -96,5 +96,17 @@
             android:textAllCaps="false"
             android:textColor="@color/light_on_primary"
             android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/btn_story_history"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_story_button_secondary"
+            android:stateListAnimator="@null"
+            android:text="Xem lại story đã làm"
+            android:textAllCaps="false"
+            android:textColor="@color/light_on_background"
+            android:textSize="15sp" />
     </LinearLayout>
 </ScrollView>

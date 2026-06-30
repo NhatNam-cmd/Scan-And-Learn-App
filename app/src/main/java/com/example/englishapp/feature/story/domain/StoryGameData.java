@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StoryGameData {
+    private long storyId;
     private String title;
     private String story;
     private List<StoryBlank> blanks;
@@ -18,6 +19,14 @@ public class StoryGameData {
         this.story = story;
         this.blanks = blanks;
         this.offline = offline;
+    }
+
+    public long getStoryId() {
+        return storyId;
+    }
+
+    public void setStoryId(long storyId) {
+        this.storyId = storyId;
     }
 
     public String getTitle() {

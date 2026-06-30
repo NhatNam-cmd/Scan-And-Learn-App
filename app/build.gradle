@@ -63,7 +63,8 @@ dependencies {
 
     // AppCompat & Material
     implementation libs.androidx.appcompat
-    implementation libs.appcompat // Của nhánh 2
+    implementation libs.appcompat
+    implementation libs.lifecycle.viewmodel// Của nhánh 2
     implementation libs.material
     implementation libs.androidx.constraintlayout
     implementation libs.androidx.fragment
