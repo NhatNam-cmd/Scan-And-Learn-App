@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.example.englishapp.core.common.ExecutorProvider;
+import com.example.englishapp.core.database.entity.StoryEntity;
 import com.example.englishapp.core.database.entity.VocabularyEntity;
 import com.example.englishapp.feature.story.data.StoryRepositoryImpl;
 import com.example.englishapp.feature.story.domain.StoryGameData;
@@ -35,6 +36,10 @@ public class StoryViewModel extends ViewModel {
 
     public LiveData<List<VocabularyEntity>> getWords() {
         return repository.getUnmasteredWords();
+    }
+
+    public LiveData<List<StoryEntity>> getCompletedStories() {
+        return repository.getCompletedStories();
     }
 
     public LiveData<List<Long>> getSelectedIds() {
