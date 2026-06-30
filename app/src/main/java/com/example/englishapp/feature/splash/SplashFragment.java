@@ -13,7 +13,7 @@ import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.example.englishapp.R;
-import com.example.englishapp.feature.auth.AuthViewModel;
+import com.example.englishapp.feature.auth.presentation.AuthViewModel;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
