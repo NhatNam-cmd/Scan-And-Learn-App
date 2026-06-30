@@ -8,7 +8,7 @@
     <!-- Bottom Nav Tabs -->
     <fragment
         android:id="@+id/nav_dashboard"
-        android:name="com.example.englishapp.feature.dashboard.DashboardFragment"
+        android:name="com.example.englishapp.feature.dashboard.presentation.DashboardFragment"
         android:label="Dashboard"
         tools:layout="@layout/fragment_dashboard" />
 
@@ -20,7 +20,7 @@
 
     <fragment
         android:id="@+id/nav_vocabulary"
-        android:name="com.example.englishapp.feature.vocabulary.VocabularyFragment"
+        android:name="com.example.englishapp.feature.vocabulary.presentation.VocabularyFragment"
         android:label="Vocabulary"
         tools:layout="@layout/fragment_vocabulary" />
 
@@ -32,7 +32,7 @@
 
     <fragment
         android:id="@+id/nav_profile"
-        android:name="com.example.englishapp.feature.profile.ProfileFragment"
+        android:name="com.example.englishapp.feature.profile.presentation.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_placeholder" />
 
@@ -44,12 +44,12 @@
 
     <fragment
         android:id="@+id/nav_login"
-        android:name="com.example.englishapp.feature.auth.LoginFragment"
+        android:name="com.example.englishapp.feature.auth.presentation.LoginFragment"
         android:label="Login" />
 
     <fragment
         android:id="@+id/nav_vocabulary_detail"
-        android:name="com.example.englishapp.feature.vocabulary.VocabularyDetailFragment"
+        android:name="com.example.englishapp.feature.vocabulary.presentation.VocabularyDetailFragment"
         android:label="Vocabulary Detail"
         tools:layout="@layout/fragment_vocabulary_detail">
         <argument
@@ -59,25 +59,25 @@
 
     <fragment
         android:id="@+id/nav_flashcard_session"
-        android:name="com.example.englishapp.feature.vocabulary.FlashcardSessionFragment"
+        android:name="com.example.englishapp.feature.vocabulary.presentation.FlashcardSessionFragment"
         android:label="Flashcard Session"
         tools:layout="@layout/fragment_flashcard_session" />
 
     <fragment
         android:id="@+id/nav_flashcard_result"
-        android:name="com.example.englishapp.feature.vocabulary.FlashcardResultFragment"
+        android:name="com.example.englishapp.feature.vocabulary.presentation.FlashcardResultFragment"
         android:label="Flashcard Result"
         tools:layout="@layout/fragment_flashcard_result" />
 
     <fragment
         android:id="@+id/nav_quiz_config"
-        android:name="com.example.englishapp.feature.quiz.QuizConfigFragment"
+        android:name="com.example.englishapp.feature.quiz.presentation.QuizConfigFragment"
         android:label="Quiz Config"
         tools:layout="@layout/fragment_quiz_config" />
 
     <fragment
         android:id="@+id/nav_quiz_session"
-        android:name="com.example.englishapp.feature.quiz.QuizSessionFragment"
+        android:name="com.example.englishapp.feature.quiz.presentation.QuizSessionFragment"
         android:label="Quiz Session"
         tools:layout="@layout/fragment_quiz_session">
         <argument
@@ -87,7 +87,7 @@
 
     <fragment
         android:id="@+id/nav_quiz_result"
-        android:name="com.example.englishapp.feature.quiz.QuizResultFragment"
+        android:name="com.example.englishapp.feature.quiz.presentation.QuizResultFragment"
         android:label="Quiz Result"
         tools:layout="@layout/fragment_quiz_result">
         <argument

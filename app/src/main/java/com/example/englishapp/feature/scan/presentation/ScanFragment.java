@@ -27,8 +27,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.mlkit.vision.text.Text;
 import com.example.englishapp.R;
 import com.example.englishapp.core.service.OcrManager;
-import com.example.englishapp.feature.scan.processor.ScanImageProcessor;
-import com.example.englishapp.feature.scan.ui.ScanWordPickerBottomSheet;
+import com.example.englishapp.feature.scan.data.ScanImageProcessor;
+import com.example.englishapp.feature.scan.presentation.ScanWordPickerBottomSheet;
 import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -43,8 +43,8 @@ import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 
-import com.example.englishapp.feature.scan.model.ScanWordItem;
-import com.example.englishapp.feature.scan.model.WordCandidate;
+import com.example.englishapp.feature.scan.domain.model.ScanWordItem;
+import com.example.englishapp.feature.scan.domain.model.WordCandidate;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
