@@ -11,14 +11,11 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.englishapp.core.datastore.UserPreferences;
 import com.example.englishapp.core.reminder.ReminderScheduler;
-import com.example.englishapp.core.reminder.StudyReminderReceiver;
 import com.example.englishapp.databinding.FragmentSettingsBinding;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
@@ -48,8 +45,7 @@ public class SettingsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        bindThemeMode();
-
+        // Restore saved values
         binding.sliderSpeechRate.setValue(userPreferences.getSpeechRate());
         binding.sliderSpeechPitch.setValue(userPreferences.getSpeechPitch());
         binding.sliderDailyGoal.setValue(userPreferences.getDailyGoal());
@@ -61,6 +57,10 @@ public class SettingsFragment extends Fragment {
         updateDailyGoalLabel(userPreferences.getDailyGoal());
         updateReminderTimeLabel();
 
+        // ── Theme selection via clickable rows ──
+        bindThemeMode();
+
+        // ── TTS sliders ──
         binding.sliderSpeechRate.addOnChangeListener((slider, value, fromUser) -> {
             userPreferences.setSpeechRate(value);
             updateSpeechRateLabel(value);
@@ -71,15 +71,16 @@ public class SettingsFragment extends Fragment {
             updateSpeechPitchLabel(value);
         });
 
+        // ── Daily goal slider ──
         binding.sliderDailyGoal.addOnChangeListener((slider, value, fromUser) -> {
             int goal = Math.round(value);
             userPreferences.setDailyGoal(goal);
             updateDailyGoalLabel(goal);
         });
 
+        // ── Reminder switch ──
         binding.switchReminder.setOnCheckedChangeListener((buttonView, isChecked) -> {
             userPreferences.setReminderEnabled(isChecked);
-
             if (isChecked) {
                 requestNotificationPermissionIfNeeded();
                 ReminderScheduler.scheduleReminder(
@@ -92,8 +93,10 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        binding.btnReminderTime.setOnClickListener(v -> showReminderTimePicker());
+        // ── Reminder time row tap ──
+        binding.rowReminderTime.setOnClickListener(v -> showReminderTimePicker());
 
+        // ── Auto-save scan switch ──
         binding.switchAutoSaveScan.setOnCheckedChangeListener((buttonView, isChecked) ->
                 userPreferences.setAutoSaveScannedWords(isChecked));
     }
@@ -104,62 +107,60 @@ public class SettingsFragment extends Fragment {
         binding = null;
     }
 
-    private void updateSpeechRateLabel(float value) {
-        binding.tvSpeechRateLabel.setText(String.format("Tốc độ đọc TTS: %.1fx", value));
-    }
-
-    private void updateSpeechPitchLabel(float value) {
-        binding.tvSpeechPitchLabel.setText(String.format("Cao độ giọng đọc: %.1fx", value));
-    }
-
-    private void updateDailyGoalLabel(int value) {
-        binding.tvDailyGoalLabel.setText(String.format("Mục tiêu mỗi ngày: %d từ", value));
-    }
-
-    private void updateReminderTimeLabel() {
-        binding.btnReminderTime.setText(String.format("Giờ nhắc: %02d:%02d",
-                userPreferences.getReminderHour(), userPreferences.getReminderMinute()));
-    }
+    // ─────────────────────────────────────────────
+    //  Theme binding
+    // ─────────────────────────────────────────────
 
     private void bindThemeMode() {
-        int checkedId;
-        int themeMode = userPreferences.getThemeMode();
+        applyThemeSelection(userPreferences.getThemeMode());
 
-        if (themeMode == UserPreferences.THEME_LIGHT) {
-            checkedId = binding.rbThemeLight.getId();
-        } else if (themeMode == UserPreferences.THEME_DARK) {
-            checkedId = binding.rbThemeDark.getId();
-        } else {
-            checkedId = binding.rbThemeSystem.getId();
-        }
+        binding.rowThemeSystem.setOnClickListener(v -> selectTheme(UserPreferences.THEME_SYSTEM));
+        binding.rowThemeLight.setOnClickListener(v -> selectTheme(UserPreferences.THEME_LIGHT));
+        binding.rowThemeDark.setOnClickListener(v -> selectTheme(UserPreferences.THEME_DARK));
+    }
 
-        binding.rgThemeMode.check(checkedId);
+    private void selectTheme(int themeMode) {
+        userPreferences.setThemeMode(themeMode);
+        applyThemeSelection(themeMode);
+        AppCompatDelegate.setDefaultNightMode(toNightMode(themeMode));
+    }
 
-        binding.rgThemeMode.setOnCheckedChangeListener((group, checked) -> {
-            int selectedMode = UserPreferences.THEME_SYSTEM;
-
-            if (checked == binding.rbThemeLight.getId()) {
-                selectedMode = UserPreferences.THEME_LIGHT;
-            } else if (checked == binding.rbThemeDark.getId()) {
-                selectedMode = UserPreferences.THEME_DARK;
-            }
-
-            userPreferences.setThemeMode(selectedMode);
-            AppCompatDelegate.setDefaultNightMode(toNightMode(selectedMode));
-        });
+    private void applyThemeSelection(int themeMode) {
+        binding.rbThemeSystem.setChecked(themeMode == UserPreferences.THEME_SYSTEM);
+        binding.rbThemeLight.setChecked(themeMode == UserPreferences.THEME_LIGHT);
+        binding.rbThemeDark.setChecked(themeMode == UserPreferences.THEME_DARK);
     }
 
     private int toNightMode(int themeMode) {
-        if (themeMode == UserPreferences.THEME_LIGHT) {
-            return AppCompatDelegate.MODE_NIGHT_NO;
-        }
-
-        if (themeMode == UserPreferences.THEME_DARK) {
-            return AppCompatDelegate.MODE_NIGHT_YES;
-        }
-
+        if (themeMode == UserPreferences.THEME_LIGHT) return AppCompatDelegate.MODE_NIGHT_NO;
+        if (themeMode == UserPreferences.THEME_DARK)  return AppCompatDelegate.MODE_NIGHT_YES;
         return AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
     }
+
+    // ─────────────────────────────────────────────
+    //  Label updaters
+    // ─────────────────────────────────────────────
+
+    private void updateSpeechRateLabel(float value) {
+        binding.tvSpeechRateLabel.setText(String.format("%.1fx", value));
+    }
+
+    private void updateSpeechPitchLabel(float value) {
+        binding.tvSpeechPitchLabel.setText(String.format("%.1fx", value));
+    }
+
+    private void updateDailyGoalLabel(int value) {
+        binding.tvDailyGoalLabel.setText(value + " từ / ngày");
+    }
+
+    private void updateReminderTimeLabel() {
+        binding.tvReminderTimeValue.setText(String.format("%02d:%02d",
+                userPreferences.getReminderHour(), userPreferences.getReminderMinute()));
+    }
+
+    // ─────────────────────────────────────────────
+    //  Time picker
+    // ─────────────────────────────────────────────
 
     private void showReminderTimePicker() {
         MaterialTimePicker picker = new MaterialTimePicker.Builder()
@@ -172,12 +173,9 @@ public class SettingsFragment extends Fragment {
         picker.addOnPositiveButtonClickListener(v -> {
             userPreferences.setReminderTime(picker.getHour(), picker.getMinute());
             userPreferences.setReminderEnabled(true);
-
             binding.switchReminder.setChecked(true);
             updateReminderTimeLabel();
-
             requestNotificationPermissionIfNeeded();
-
             ReminderScheduler.scheduleReminder(
                     requireContext(),
                     picker.getHour(),
@@ -187,6 +185,10 @@ public class SettingsFragment extends Fragment {
 
         picker.show(getParentFragmentManager(), "reminder_time_picker");
     }
+
+    // ─────────────────────────────────────────────
+    //  Notification permission
+    // ─────────────────────────────────────────────
 
     private void requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
