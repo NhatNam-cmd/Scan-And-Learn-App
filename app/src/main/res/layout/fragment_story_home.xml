@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@color/light_background">
+    android:background="?android:colorBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -12,14 +12,21 @@
         android:orientation="vertical"
         android:padding="24dp">
 
-        <ImageView
-            android:id="@+id/img_story"
-            android:layout_width="112dp"
-            android:layout_height="112dp"
+        <!-- Hero icon with gradient circle background -->
+        <FrameLayout
+            android:id="@+id/layout_hero_icon"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
             android:layout_marginTop="48dp"
-            android:contentDescription="Story"
-            android:src="@android:drawable/ic_menu_edit"
-            android:tint="@color/light_primary" />
+            android:background="@drawable/bg_empty_state_circle">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="📖"
+                android:textSize="52sp" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tv_story_intro_title"
@@ -28,7 +35,7 @@
             android:layout_marginTop="24dp"
             android:gravity="center"
             android:text="Story Practice"
-            android:textColor="@color/light_on_background"
+            android:textColor="?attr/colorOnBackground"
             android:textSize="28sp"
             android:textStyle="bold" />
 
@@ -40,7 +47,7 @@
             android:gravity="center"
             android:lineSpacingExtra="4dp"
             android:text="Chọn 5-10 từ chưa thuộc, ứng dụng sẽ tạo một câu chuyện ngắn. Nhiệm vụ của bạn là chạm vào từ đúng để điền vào từng ô trống."
-            android:textColor="@color/light_on_background"
+            android:textColor="?attr/colorOnBackground"
             android:textSize="16sp" />
 
         <LinearLayout
@@ -59,7 +66,7 @@
                 android:background="@drawable/bg_story_badge"
                 android:gravity="center"
                 android:text="5-10 từ"
-                android:textColor="@color/light_on_secondary_container"
+                android:textColor="?attr/colorOnSecondaryContainer"
                 android:textStyle="bold" />
 
             <TextView
@@ -69,8 +76,8 @@
                 android:layout_weight="1"
                 android:background="@drawable/bg_story_badge"
                 android:gravity="center"
-                android:text="Có Offline"
-                android:textColor="@color/light_on_secondary_container"
+                android:text="✨ AI Story"
+                android:textColor="?attr/colorOnSecondaryContainer"
                 android:textStyle="bold" />
 
             <TextView
@@ -81,7 +88,7 @@
                 android:background="@drawable/bg_story_badge"
                 android:gravity="center"
                 android:text="+EXP"
-                android:textColor="@color/light_on_secondary_container"
+                android:textColor="?attr/colorOnSecondaryContainer"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -92,10 +99,11 @@
             android:layout_marginTop="32dp"
             android:background="@drawable/bg_story_button_primary"
             android:stateListAnimator="@null"
-            android:text="Tạo cốt truyện mới"
+            android:text="✨ Tạo cốt truyện mới"
             android:textAllCaps="false"
-            android:textColor="@color/light_on_primary"
-            android:textSize="16sp" />
+            android:textColor="?attr/colorOnPrimary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/btn_story_history"
@@ -104,9 +112,9 @@
             android:layout_marginTop="12dp"
             android:background="@drawable/bg_story_button_secondary"
             android:stateListAnimator="@null"
-            android:text="Xem lại story đã làm"
+            android:text="📚 Xem lại story đã làm"
             android:textAllCaps="false"
-            android:textColor="@color/light_on_background"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="15sp" />
     </LinearLayout>
 </ScrollView>

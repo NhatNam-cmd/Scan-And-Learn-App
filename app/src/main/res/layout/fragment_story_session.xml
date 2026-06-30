@@ -8,7 +8,7 @@
         android:id="@+id/layout_session_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/light_background"
+        android:background="?android:colorBackground"
         android:orientation="vertical"
         android:visibility="gone">
 
@@ -90,7 +90,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
                         android:text="📖 Câu chuyện"
-                        android:textColor="@color/light_primary"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -99,7 +99,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:lineSpacingMultiplier="1.6"
-                        android:textColor="@color/light_on_background"
+                        android:textColor="?attr/colorOnBackground"
                         android:textSize="17sp" />
                 </LinearLayout>
 
@@ -124,7 +124,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="✅ Ô đã điền"
-                            android:textColor="@color/light_secondary"
+                            android:textColor="?attr/colorSecondary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
 
@@ -133,7 +133,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Chạm để xóa"
-                            android:textColor="#FF9CA3AF"
+                            android:textColor="?attr/colorOutline"
                             android:textSize="11sp" />
                     </LinearLayout>
 
@@ -165,7 +165,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="🔤 Kho từ"
-                            android:textColor="@color/light_primary"
+                            android:textColor="?attr/colorPrimary"
                             android:textSize="13sp"
                             android:textStyle="bold" />
 
@@ -174,7 +174,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Chạm để điền"
-                            android:textColor="#FF9CA3AF"
+                            android:textColor="?attr/colorOutline"
                             android:textSize="11sp" />
                     </LinearLayout>
 
@@ -191,7 +191,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/light_surface"
+            android:background="?attr/colorSurface"
             android:elevation="8dp"
             android:padding="16dp"
             android:paddingBottom="20dp">
@@ -206,7 +206,7 @@
                 android:stateListAnimator="@null"
                 android:text="Hoàn thành"
                 android:textAllCaps="false"
-                android:textColor="@color/light_on_primary"
+                android:textColor="?attr/colorOnPrimary"
                 android:textSize="16sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -246,7 +246,7 @@
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:elevation="6dp"
-            app:cardBackgroundColor="@color/light_primary"
+            app:cardBackgroundColor="?attr/colorPrimary"
             app:cardCornerRadius="28dp"
             xmlns:app="http://schemas.android.com/apk/res-auto">
 

@@ -2,31 +2,34 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="10dp"
+    android:layout_marginBottom="8dp"
     android:background="@drawable/bg_vocabulary_item"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
     android:orientation="vertical"
-    android:padding="14dp">
+    android:padding="12dp">
 
+    <!-- ── Row 1: initial circle · word + phonetic · badge · check ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <!-- Initial letter circle -->
         <TextView
             android:id="@+id/tv_word_initial"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginEnd="12dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="10dp"
             android:background="@drawable/bg_vocabulary_initial"
             android:gravity="center"
-            android:textColor="@color/light_primary"
-            android:textSize="18sp"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
+        <!-- Word + phonetic -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -40,86 +43,105 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="?colorOnBackground"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tv_phonetic"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="1dp"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="?colorPrimary"
-                android:textSize="13sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
+        <!-- Source badge -->
         <TextView
             android:id="@+id/tv_source"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="8dp"
             android:background="@drawable/bg_vocabulary_badge"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="5dp"
-            android:textColor="@color/light_on_secondary_container"
-            android:textSize="11sp"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:textColor="?attr/colorOnSecondaryContainer"
+            android:textSize="10sp"
             android:textStyle="bold" />
 
+        <!-- Selection checkmark -->
         <TextView
             android:id="@+id/tv_selected_check"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginStart="8dp"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginStart="6dp"
             android:background="@drawable/bg_vocabulary_initial"
             android:gravity="center"
             android:text="✓"
-            android:textColor="@color/light_primary"
-            android:textSize="16sp"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:visibility="gone" />
     </LinearLayout>
 
+    <!-- ── Row 2: meaning (1 line, ellipsize) ── -->
     <TextView
         android:id="@+id/tv_meaning"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="50dp"
         android:ellipsize="end"
-        android:lineSpacingExtra="2dp"
-        android:maxLines="2"
+        android:maxLines="1"
         android:textColor="?colorOnSurface"
-        android:textSize="14sp" />
+        android:textSize="13sp" />
 
+    <!-- ── Row 3: mastery bar + level label + review date (all in 1 line) ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="50dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <!-- Segmented mastery bar -->
         <LinearLayout
             android:id="@+id/layout_mastery_segments"
             android:layout_width="0dp"
-            android:layout_height="8dp"
+            android:layout_height="5dp"
             android:layout_weight="1"
             android:orientation="horizontal" />
 
+        <!-- Level label -->
         <TextView
             android:id="@+id/tv_mastery"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="8dp"
             android:textColor="?colorSecondary"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:textStyle="bold" />
+
+        <!-- Divider dot -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="4dp"
+            android:text="·"
+            android:textColor="?attr/colorOutline"
+            android:textSize="11sp" />
+
+        <!-- Review date -->
+        <TextView
+            android:id="@+id/tv_review"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="?attr/colorOutline"
+            android:textSize="11sp" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tv_review"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="?colorOnSurface"
-        android:textSize="12sp" />
 </LinearLayout>

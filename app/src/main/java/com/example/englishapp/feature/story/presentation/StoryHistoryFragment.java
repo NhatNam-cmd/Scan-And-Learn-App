@@ -1,6 +1,5 @@
 package com.example.englishapp.feature.story.presentation;
 
-import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +17,7 @@ import com.example.englishapp.R;
 import com.example.englishapp.core.database.entity.StoryEntity;
 import com.example.englishapp.databinding.FragmentStoryHistoryBinding;
 import com.example.englishapp.feature.story.domain.StoryGameData;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
@@ -68,16 +68,19 @@ public class StoryHistoryFragment extends Fragment {
     private void showStoryDetail(StoryEntity story) {
         View content = LayoutInflater.from(requireContext())
                 .inflate(R.layout.dialog_story_history_detail, null, false);
-        TextView title = content.findViewById(R.id.tv_story_detail_title);
-        TextView meta = content.findViewById(R.id.tv_story_detail_meta);
-        TextView body = content.findViewById(R.id.tv_story_detail_body);
+
+        TextView tvType = content.findViewById(R.id.tv_story_detail_type);
+        TextView tvTitle = content.findViewById(R.id.tv_story_detail_title);
+        TextView tvMeta = content.findViewById(R.id.tv_story_detail_meta);
+        TextView tvBody = content.findViewById(R.id.tv_story_detail_body);
 
         StoryGameData data = parseStory(story);
-        title.setText(story.getTitle());
-        meta.setText(formatDifficulty(story.getDifficulty()) + " • " + dateFormat.format(new Date(story.getCreatedAt())));
-        body.setText(data != null && data.getStory() != null ? data.getStory() : story.getContent());
+        tvType.setText(formatDifficulty(story.getDifficulty()));
+        tvTitle.setText(story.getTitle());
+        tvMeta.setText("🕐 " + dateFormat.format(new Date(story.getCreatedAt())));
+        tvBody.setText(data != null && data.getStory() != null ? data.getStory() : story.getContent());
 
-        new AlertDialog.Builder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
                 .setView(content)
                 .setPositiveButton("Đóng", null)
                 .show();
@@ -93,10 +96,10 @@ public class StoryHistoryFragment extends Fragment {
 
     private String formatDifficulty(String difficulty) {
         if ("AI".equalsIgnoreCase(difficulty)) {
-            return "AI Story";
+            return "✨ AI Story";
         }
         if ("OFFLINE".equalsIgnoreCase(difficulty)) {
-            return "Offline Story";
+            return "📖 Offline Story";
         }
         return difficulty == null || difficulty.trim().isEmpty() ? "Story" : difficulty;
     }

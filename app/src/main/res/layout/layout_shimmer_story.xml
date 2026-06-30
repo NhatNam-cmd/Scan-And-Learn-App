@@ -4,7 +4,7 @@
     android:id="@+id/shimmer_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/light_background"
+    android:background="?android:colorBackground"
     android:orientation="vertical"
     android:visibility="gone">
 
@@ -171,7 +171,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="✨ AI đang dệt câu chuyện cho bạn..."
-            android:textColor="@color/light_primary"
+            android:textColor="?attr/colorPrimary"
             android:textSize="14sp"
             android:textStyle="italic" />
     </LinearLayout>

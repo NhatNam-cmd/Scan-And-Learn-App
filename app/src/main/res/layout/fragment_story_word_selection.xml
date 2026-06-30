@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/light_background"
+    android:background="?android:colorBackground"
     android:orientation="vertical">
 
     <!-- Header Card -->
@@ -171,7 +171,7 @@
             android:layout_marginTop="24dp"
             android:gravity="center"
             android:text="Bạn đã ôn tập hết từ vựng!"
-            android:textColor="@color/light_primary"
+            android:textColor="?attr/colorPrimary"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -184,7 +184,7 @@
             android:gravity="center"
             android:lineSpacingMultiplier="1.5"
             android:text="Tuyệt vời! Bạn đã thuộc tất cả từ vựng.&#10;Hãy đi quét thêm sách để học từ mới nhé!"
-            android:textColor="#FF6B7280"
+            android:textColor="?attr/colorOutline"
             android:textSize="15sp" />
 
         <!-- Scan CTA button -->
@@ -198,7 +198,7 @@
             android:stateListAnimator="@null"
             android:text="📷 Quét sách ngay"
             android:textAllCaps="false"
-            android:textColor="@color/light_on_primary"
+            android:textColor="?attr/colorOnPrimary"
             android:textSize="15sp"
             android:textStyle="bold" />
 
@@ -232,7 +232,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/light_surface"
+        android:background="?attr/colorSurface"
         android:elevation="8dp"
         android:orientation="vertical"
         android:padding="16dp"
@@ -246,7 +246,7 @@
             android:layout_height="4dp"
             android:layout_marginBottom="12dp"
             android:indeterminate="true"
-            android:indeterminateTint="@color/light_primary"
+            android:indeterminateTint="?attr/colorPrimary"
             android:visibility="gone" />
 
         <Button
@@ -259,7 +259,7 @@
             android:stateListAnimator="@null"
             android:text="Chọn ít nhất 5 từ"
             android:textAllCaps="false"
-            android:textColor="@color/light_on_primary"
+            android:textColor="?attr/colorOnPrimary"
             android:textSize="16sp"
             android:textStyle="bold" />
     </LinearLayout>
